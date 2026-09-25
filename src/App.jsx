@@ -1,0 +1,451 @@
+import { useState } from 'react'; import { Search, UserRound, Heart, ShoppingBag, Menu } from 'lucide-react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Shop from './pages/Shop.jsx'
+import ProductDetails from './pages/ProductDetails.jsx'
+import Cart from './pages/Cart.jsx'
+import { CartProvider } from './context/CartContext.jsx'
+
+function HomePage() {
+  const [searchOpen, setSearchOpen] = useState(false)
+  return (
+    <div className="min-h-screen bg-[#f7f7f5] text-[#111111]">
+
+      <div className="border-b border-white/10 bg-[#111111] px-4 py-2.5 text-center text-[10px] font-medium uppercase tracking-[0.28em] text-white">
+        FX Fashion Gallery · New Collection
+      </div>
+
+      <header className="border-b border-black/10 bg-[#f7f7f5]">
+        <div className="mx-auto flex h-[82px] max-w-[1500px] items-center justify-between px-5 md:px-10">
+
+          <button className="lg:hidden">
+            <Menu size={22} strokeWidth={1.5} />
+          </button>
+
+          <div className="leading-none">
+            <div className="text-[21px] font-black tracking-[-0.065em] md:text-[25px]">
+              FX FASHION
+            </div>
+            <div className="mt-1 text-[8px] font-medium tracking-[0.52em] text-black/50">
+              GALLERY
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-9 lg:flex">
+            {['Home', 'Men', 'Women', 'Kids', 'New Arrivals', 'Sale'].map((item) => (
+              <a
+                key={item}
+                href="#"
+                className="text-[11px] font-semibold uppercase tracking-[0.16em] transition-opacity hover:opacity-40"
+              >
+                {item}
+              </a>
+            ))}
+          </nav>
+
+          {searchOpen && (
+            <div className="absolute left-0 right-0 top-full z-50 border-t border-black/10 bg-white px-5 py-4 shadow-lg">
+              <input autoFocus type="text" placeholder="Search products..." className="w-full border-b border-black/20 bg-transparent py-3 text-sm outline-none placeholder:text-black/40" />
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 md:gap-5">
+            <button onClick={() => setSearchOpen(searchOpen ? false : true)} className="hidden transition-opacity hover:opacity-40 sm:block">
+              <Search size={19} strokeWidth={1.5} />
+            </button>
+
+            <button className="hidden transition-opacity hover:opacity-40 sm:block">
+              <UserRound size={19} strokeWidth={1.5} />
+            </button>
+
+            <button className="transition-opacity hover:opacity-40">
+              <Heart size={19} strokeWidth={1.5} />
+            </button>
+
+            <button className="relative transition-opacity hover:opacity-40">
+              <ShoppingBag size={20} strokeWidth={1.5} />
+              <span className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#111111] px-1 text-[8px] font-bold text-white">
+                0
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+
+        <section className="relative min-h-[650px] overflow-hidden bg-[#d9d5ce] md:min-h-[760px]">
+          <img
+            src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=2200&q=90"
+            alt="FX Fashion Gallery collection"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+
+          <div className="absolute inset-0 bg-black/30" />
+
+          <div className="relative mx-auto flex min-h-[650px] max-w-[1500px] items-end px-6 pb-14 md:min-h-[760px] md:px-10 md:pb-20 lg:px-14">
+
+            <div className="max-w-[720px] text-white">
+
+              <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.35em] md:text-[11px]">
+                The New Season · 2026
+              </p>
+
+              <h1 className="text-[56px] font-black uppercase leading-[0.86] tracking-[-0.065em] sm:text-7xl md:text-8xl lg:text-[110px]">
+                Style
+                <br />
+                That Defines
+                <br />
+                You.
+              </h1>
+
+              <p className="mt-7 max-w-[440px] text-sm leading-6 text-white/85 md:text-[15px]">
+                Discover elevated everyday fashion curated for modern men,
+                women and kids.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href="/shop" className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white">
+                  Shop Collection
+                </a>
+
+                <button className="border border-white/70 px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-white hover:text-black">
+                  New Arrivals
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
+
+          <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/45">
+                Explore the collection
+              </p>
+
+              <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
+                Shop by Category
+              </h2>
+            </div>
+
+            <a
+              href="#"
+              className="w-fit border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+            >
+              View All
+            </a>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+
+            {[
+              {
+                name: 'Men',
+                image: 'https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1000&q=90',
+              },
+              {
+                name: 'Women',
+                image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1000&q=90',
+              },
+              {
+                name: 'Kids',
+                image: 'https://images.unsplash.com/photo-1519457431-44ccd64a579b?auto=format&fit=crop&w=1000&q=90',
+              },
+            ].map((category) => (
+              <a
+                key={category.name}
+                href="#"
+                className="group relative h-[500px] overflow-hidden bg-black"
+              >
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105 group-hover:opacity-90"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
+
+                <div className="absolute bottom-8 left-8 text-white">
+                  <h3 className="text-4xl font-black uppercase tracking-[-0.05em]">
+                    {category.name}
+                  </h3>
+
+                  <span className="mt-3 inline-block border-b border-white pb-1 text-[10px] font-bold uppercase tracking-[0.22em]">
+                    Shop Now
+                  </span>
+                </div>
+              </a>
+            ))}
+
+          </div>
+        </section>
+
+
+        <section className="border-t border-black/10 bg-white">
+          <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
+
+            <div className="mb-12 flex items-end justify-between">
+              <div>
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
+                  Freshly selected
+                </p>
+                <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
+                  New Arrivals
+                </h2>
+              </div>
+
+              <a href="#" className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block">
+                View All
+              </a>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-5">
+
+              {[
+                {
+                  name: 'Essential Oversized Shirt',
+                  category: 'Men',
+                  price: '৳1,890',
+                  oldPrice: '৳2,290',
+                  image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Minimal Everyday Dress',
+                  category: 'Women',
+                  price: '৳2,490',
+                  oldPrice: '৳2,990',
+                  image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Classic Street Jacket',
+                  category: 'Men',
+                  price: '৳2,790',
+                  oldPrice: '৳3,290',
+                  image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Modern Casual Look',
+                  category: 'Women',
+                  price: '৳2,190',
+                  oldPrice: '৳2,590',
+                  image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=900&q=90',
+                },
+              ].map((product) => (
+                <article key={product.name} className="group">
+
+                  <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
+
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                    />
+
+                    <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em]">
+                      New
+                    </span>
+
+                    <button className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white">
+                      <Heart size={15} strokeWidth={1.5} />
+                    </button>
+
+                    <button onClick={() => alert("Product added to cart")} className="mt-3 w-full rounded-full bg-black py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+                      Add to Cart
+                    </button>
+
+                  </div>
+
+                  <div className="pt-4">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
+                      {product.category}
+                    </p>
+
+                    <h3 className="mt-1 text-sm font-semibold leading-5 md:text-[15px]">
+                      {product.name}
+                    </h3>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-sm font-bold">{product.price}</span>
+                      <span className="text-xs text-black/35 line-through">
+                        {product.oldPrice}
+                      </span>
+                    </div>
+                  </div>
+
+                </article>
+              ))}
+
+            </div>
+          </div>
+        </section>
+
+
+        <section className="bg-[#111111] px-5 py-20 text-white md:px-10 md:py-28">
+          <div className="mx-auto grid max-w-[1500px] overflow-hidden bg-[#1d1d1b] md:grid-cols-2">
+
+            <div className="relative min-h-[430px] overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=90"
+                alt="Exclusive fashion collection"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/15" />
+            </div>
+
+            <div className="flex min-h-[430px] flex-col justify-center px-8 py-14 md:px-14 lg:px-20">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/45">
+                FX Editorial
+              </p>
+
+              <h2 className="mt-5 max-w-xl text-4xl font-black uppercase leading-[0.92] tracking-[-0.055em] md:text-6xl">
+                Everyday
+                <br />
+                Essentials,
+                <br />
+                Elevated.
+              </h2>
+
+              <p className="mt-6 max-w-md text-sm leading-6 text-white/55">
+                Timeless silhouettes, modern details and effortless pieces
+                designed to become part of your everyday wardrobe.
+              </p>
+
+              <button className="mt-8 w-fit border border-white/50 px-7 py-4 text-[10px] font-bold uppercase tracking-[0.2em] transition hover:bg-white hover:text-black">
+                Explore Collection
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <section className="border-b border-black/10 bg-white">
+          <div className="mx-auto grid max-w-[1500px] md:grid-cols-4">
+
+            {[
+              ['01', 'Quality First', 'Thoughtfully selected products made for everyday style.'],
+              ['02', 'Fast Delivery', 'Reliable delivery service across Bangladesh.'],
+              ['03', 'Secure Shopping', 'A simple and secure online shopping experience.'],
+              ['04', 'Customer Care', 'Friendly support whenever you need assistance.'],
+            ].map(([number, title, description]) => (
+              <div
+                key={number}
+                className="border-t border-black/10 px-6 py-9 md:border-r md:px-8 md:py-12 last:md:border-r-0"
+              >
+                <span className="text-[9px] font-bold tracking-[0.2em] text-black/30">
+                  {number}
+                </span>
+
+                <h3 className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em]">
+                  {title}
+                </h3>
+
+                <p className="mt-3 max-w-[240px] text-xs leading-5 text-black/45">
+                  {description}
+                </p>
+              </div>
+            ))}
+
+          </div>
+        </section>
+
+        <footer className="bg-[#111111] px-5 py-16 text-white md:px-10 md:py-20">
+          <div className="mx-auto max-w-[1500px]">
+
+            <div className="grid gap-12 md:grid-cols-4">
+
+              <div className="md:col-span-1">
+                <div className="text-2xl font-black tracking-[-0.06em]">
+                  FX FASHION
+                </div>
+
+                <div className="mt-1 text-[8px] tracking-[0.52em] text-white/40">
+                  GALLERY
+                </div>
+
+                <p className="mt-6 max-w-xs text-xs leading-6 text-white/45">
+                  Modern fashion for men, women and kids. Discover your style
+                  with FX Fashion Gallery.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
+                  Shop
+                </h3>
+
+                <div className="mt-5 space-y-3 text-xs text-white/70">
+                  <a href="#" className="block hover:text-white">Men</a>
+                  <a href="#" className="block hover:text-white">Women</a>
+                  <a href="#" className="block hover:text-white">Kids</a>
+                  <a href="#" className="block hover:text-white">New Arrivals</a>
+                  <a href="#" className="block hover:text-white">Sale</a>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
+                  Help
+                </h3>
+
+                <div className="mt-5 space-y-3 text-xs text-white/70">
+                  <a href="#" className="block hover:text-white">Contact Us</a>
+                  <a href="#" className="block hover:text-white">Delivery Information</a>
+                  <a href="#" className="block hover:text-white">Returns & Exchange</a>
+                  <a href="#" className="block hover:text-white">Track Order</a>
+                  <a href="#" className="block hover:text-white">Privacy Policy</a>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
+                  Stay Connected
+                </h3>
+
+                <p className="mt-5 max-w-xs text-xs leading-5 text-white/45">
+                  Follow FX Fashion Gallery for new arrivals, offers and
+                  fashion updates.
+                </p>
+
+                <div className="mt-6 flex gap-3">
+                  <button className="border border-white/20 px-4 py-3 text-[9px] font-bold uppercase tracking-[0.15em] hover:bg-white hover:text-black">
+                    Instagram
+                  </button>
+
+                  <button className="border border-white/20 px-4 py-3 text-[9px] font-bold uppercase tracking-[0.15em] hover:bg-white hover:text-black">
+                    Facebook
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-14 border-t border-white/10 pt-6 text-[9px] uppercase tracking-[0.15em] text-white/30">
+              © 2026 FX Fashion Gallery. All rights reserved.
+            </div>
+
+          </div>
+        </footer>
+
+      </main>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
+  )
+}
