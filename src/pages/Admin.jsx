@@ -102,7 +102,7 @@ export default function Admin() {
   if (!loggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] px-5 text-[#111]">
-        <form onSubmit={async (e) => { e.preventDefault(); setNotice(""); try { await signInWithEmailAndPassword(auth, email.trim(), password); } catch (error) { setNotice("Login failed. Please check your email and password."); } }} className="w-full max-w-sm border border-black/10 bg-white p-8">
+        <form onSubmit={async (e) => { e.preventDefault(); setNotice(""); try { await signInWithEmailAndPassword(auth, email.trim(), password); } catch (error) { setNotice("Firebase login error: " + (error.code || error.message || "Unknown error")); } }} className="w-full max-w-sm border border-black/10 bg-white p-8">
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin Email" autoComplete="email" className="mt-6 w-full border border-black/15 px-4 py-3 text-sm outline-none focus:border-black" />
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">FX Fashion Gallery</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">Admin Login</h1>
