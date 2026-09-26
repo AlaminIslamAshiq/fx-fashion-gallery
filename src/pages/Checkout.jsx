@@ -27,8 +27,21 @@ export default function Checkout() {
   const [validationMessage, setValidationMessage] = useState("");
 
   const placeOrder = () => {
-    if (!customer.name || !customer.phone || !customer.address || !customer.city || !customer.area || checkoutItems.length === 0 || (paymentMethod !== "Cash on Delivery" && !transactionId.trim())) {
-      setValidationMessage("Please complete all delivery information and add at least one product.");
+    const missingFields = [];
+
+    if (!customer.name.trim()) missingFields.push("Full Name");
+    if (!customer.phone.trim()) missingFields.push("Phone Number");
+    if (!customer.address.trim()) missingFields.push("Delivery Address");
+    if (!customer.city.trim()) missingFields.push("City");
+    if (!customer.area.trim()) missingFields.push("Area / District");
+    if (checkoutItems.length === 0) missingFields.push("Product");
+
+    if (paymentMethod !== "Cash on Delivery" && !transactionId.trim()) {
+      missingFields.push("Transaction ID");
+    }
+
+    if (missingFields.length > 0) {
+      setValidationMessage(`Please complete: ${missingFields.join(", ")}.`);
       return;
     }
 
