@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Shop from './pages/Shop.jsx'
 import ProductDetails from './pages/ProductDetails.jsx'
 import Cart from './pages/Cart.jsx'
+import Checkout from './pages/Checkout.jsx'
+import Admin from './pages/Admin.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 
 function HomePage() {
