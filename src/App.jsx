@@ -1,4 +1,4 @@
-import { useState } from 'react'; import { Search, UserRound, Heart, ShoppingBag, Menu } from 'lucide-react'
+import { useEffect, useState } from 'react'; import { Search, UserRound, Heart, ShoppingBag, Menu } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useCart } from './context/CartContext.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
@@ -9,7 +9,7 @@ import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 
-function HomePage() {
+const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern fashion. Timeless style.", primaryColor: "#111111", accentColor: "#f7f7f5", phone: "01897523321", whatsapp: "01897523321", currency: "৳", dhakaDelivery: 70, outsideDelivery: 120 }; function getSiteSettings() { try { return { ...defaultSiteSettings, ...JSON.parse(localStorage.getItem("fx_site_settings") || "{}") }; } catch { return defaultSiteSettings; } } function HomePage() {
   const [siteSettings, setSiteSettings] = useState(getSiteSettings);
 
   useEffect(() => {
