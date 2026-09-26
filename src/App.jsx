@@ -1,4 +1,6 @@
 import { useState } from 'react'; import { Search, UserRound, Heart, ShoppingBag, Menu } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useCart } from './context/CartContext.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Shop from './pages/Shop.jsx'
 import ProductDetails from './pages/ProductDetails.jsx'
@@ -9,6 +11,8 @@ import { CartProvider } from './context/CartContext.jsx'
 
 function HomePage() {
   const [searchOpen, setSearchOpen] = useState(false)
+  const [addedProduct, setAddedProduct] = useState("")
+  const { cartCount, addToCart } = useCart()
   return (
     <div className="min-h-screen bg-[#f7f7f5] text-[#111111]">
 
@@ -63,12 +67,10 @@ function HomePage() {
               <Heart size={19} strokeWidth={1.5} />
             </button>
 
-            <button className="relative transition-opacity hover:opacity-40">
+            <Link to="/cart" className="relative transition-opacity hover:opacity-40" aria-label="Cart">
               <ShoppingBag size={20} strokeWidth={1.5} />
-              <span className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#111111] px-1 text-[8px] font-bold text-white">
-                0
-              </span>
-            </button>
+              {cartCount > 0 && <span className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#111111] px-1 text-[8px] font-bold text-white">{cartCount}</span>}
+            </Link>
           </div>
         </div>
       </header>
@@ -253,8 +255,16 @@ function HomePage() {
                       <Heart size={15} strokeWidth={1.5} />
                     </button>
 
-                    <button onClick={() => alert("Product added to cart")} className="mt-3 w-full rounded-full bg-black py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
-                      Add to Cart
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addToCart(product, "M", 1)
+                        setAddedProduct(product.name)
+                        setTimeout(() => setAddedProduct(""), 1800)
+                      }}
+                      className="mt-3 w-full rounded-full bg-black py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+                    >
+                      {addedProduct === product.name ? "Added to Cart ✓" : "Add to Cart"}
                     </button>
 
                   </div>

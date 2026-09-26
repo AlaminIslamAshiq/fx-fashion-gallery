@@ -31,7 +31,7 @@ export default function Shop() {
           {filteredProducts.map((product) => (
             <Link key={product.name} to={`/product/${products.indexOf(product)}`} className="group block">
               <div className="relative aspect-[3/4] overflow-hidden bg-[#e9e9e5]">
-                <img src={`https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=800&q=85`} alt={product.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                <img src={product.imageData || `https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=800&q=85`} alt={product.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                 <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em]">New</span>
               </div>
               <p className="mt-4 text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">{product.category}</p>

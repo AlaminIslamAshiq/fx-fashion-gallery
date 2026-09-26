@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 
-const products = [
+const defaultProducts = [
   { category: "Men", name: "Essential Oversized Shirt", price: "৳1,890", image: "photo-1602810318383-e386cc2a3ccf", description: "A premium everyday oversized shirt designed for effortless modern style." },
   { category: "Women", name: "Minimal Everyday Dress", price: "৳2,490", image: "photo-1595777457583-95e059d581b8", description: "A clean and elegant everyday dress made for modern comfort and style." },
   { category: "Men", name: "Classic Street Jacket", price: "৳2,790", image: "photo-1551028719-00167b16eac5", description: "A versatile street-inspired jacket that adds a refined edge to any look." },
@@ -11,9 +11,12 @@ const products = [
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const customProducts = JSON.parse(localStorage.getItem("fx_products") || "[]");
+  const products = [...defaultProducts, ...customProducts];
   const product = products[Number(id)] || products[0];
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("M");
+  const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
 
   return (
@@ -22,7 +25,7 @@ export default function ProductDetails() {
         <Link to="/shop" className="text-[10px] font-bold uppercase tracking-[0.2em]">← Back to Shop</Link>
         <section className="mt-8 grid gap-10 md:grid-cols-2 md:gap-16">
           <div className="aspect-[3/4] overflow-hidden bg-[#e9e9e5]">
-            <img src={`https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=1000&q=90`} alt={product.name} className="h-full w-full object-cover" />
+            <img src={product.imageData || `https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=1000&q=90`} alt={product.name} className="h-full w-full object-cover" />
           </div>
           <div className="flex flex-col justify-center">
             <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">{product.category}</p>
@@ -43,7 +46,8 @@ export default function ProductDetails() {
                 <button onClick={() => setQuantity(quantity + 1)} className="text-lg">+</button>
               </div>
             </div>
-            <button onClick={() => addToCart(product, selectedSize, quantity)} className="mt-3 w-full bg-black py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80">Add to Cart</button>
+            <button onClick={() => { addToCart(product, selectedSize, quantity); setAdded(true); setTimeout(() => setAdded(false), 2000); }} className="mt-3 w-full bg-black py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80">{added ? "Added to Cart ✓" : "Add to Cart"}</button>
+            <Link to={`/checkout?buyNow=${products.indexOf(product)}&size=${selectedSize}&quantity=${quantity}`} className="mt-2 block w-full border border-black bg-transparent py-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white">Buy Now</Link>
           </div>
         </section>
       </div>

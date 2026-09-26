@@ -37,7 +37,7 @@ export default function Cart() {
               {cartItems.map((item, index) => (
                 <article key={`${item.name}-${index}`} className="flex gap-5 border-b border-black/10 pb-5">
                   <img
-                    src={`https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&q=80`}
+                    src={item.imageData || (item.image ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&q=80` : "")}
                     alt={item.name}
                     className="h-32 w-24 object-cover"
                   />

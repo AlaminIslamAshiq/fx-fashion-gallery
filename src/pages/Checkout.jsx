@@ -1,32 +1,53 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
 
 export default function Checkout() {
   const { cartItems, clearCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const buyNowIndex = searchParams.get("buyNow");
+  const buyNowSize = searchParams.get("size") || "M";
+  const buyNowQuantity = Number(searchParams.get("quantity") || 1);
+  const defaultProducts = [
+    { category: "Men", name: "Essential Oversized Shirt", price: "৳1,890", image: "photo-1602810318383-e386cc2a3ccf", description: "A premium everyday oversized shirt designed for effortless modern style." },
+    { category: "Women", name: "Minimal Everyday Dress", price: "৳2,490", image: "photo-1595777457583-95e059d581b8", description: "A clean and elegant everyday dress made for modern comfort and style." },
+    { category: "Men", name: "Classic Street Jacket", price: "৳2,790", image: "photo-1551028719-00167b16eac5", description: "A versatile street-inspired jacket that adds a refined edge to any look." },
+    { category: "Women", name: "Modern Casual Look", price: "৳2,190", image: "photo-1539109136881-3be0616acf4b", description: "A modern casual fashion piece designed for everyday confidence." }
+  ];
+  const customProducts = JSON.parse(localStorage.getItem("fx_products") || "[]");
+  const allProducts = [...defaultProducts, ...customProducts];
+  const directProduct = buyNowIndex !== null ? allProducts[Number(buyNowIndex)] : null;
+  const checkoutItems = directProduct ? [{ ...directProduct, size: buyNowSize, quantity: buyNowQuantity }] : cartItems;
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", city: "", area: "" });
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+  const [transactionId, setTransactionId] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
 
   const placeOrder = () => {
-    if (!customer.name || !customer.phone || !customer.address || !customer.city || !customer.area || cartItems.length === 0) {
-      alert("Please complete all delivery information and add at least one product.");
+    if (!customer.name || !customer.phone || !customer.address || !customer.city || !customer.area || checkoutItems.length === 0 || (paymentMethod !== "Cash on Delivery" && !transactionId.trim())) {
+      setValidationMessage("Please complete all delivery information and add at least one product.");
       return;
     }
 
     const newOrderId = `FX-${Date.now().toString().slice(-8)}`;
-    const order = { id: newOrderId, customer, items: cartItems, subtotal, paymentMethod: "Cash on Delivery", status: "Pending", createdAt: new Date().toISOString() };
+    const order = { id: newOrderId, customer, items: checkoutItems, subtotal, deliveryCharge, total, paymentMethod, transactionId: paymentMethod === "Cash on Delivery" ? "" : transactionId.trim(), paymentStatus: paymentMethod === "Cash on Delivery" ? "Not Required" : "Pending", status: "Pending", createdAt: new Date().toISOString() };
     const existingOrders = JSON.parse(localStorage.getItem("fx_orders") || "[]");
     localStorage.setItem("fx_orders", JSON.stringify([...existingOrders, order]));
     setOrderId(newOrderId);
     setOrderPlaced(true);
-    clearCart();
+    if (!directProduct) clearCart();
   };
 
-  const subtotal = cartItems.reduce((total, item) => {
+  const subtotal = checkoutItems.reduce((total, item) => {
     const price = Number(item.price.replace(/[^0-9]/g, ""));
     return total + price * item.quantity;
   }, 0);
+
+  const deliveryCharge = customer.city.trim() ? (customer.city.trim().toLowerCase() === "dhaka" ? 70 : 120) : 0;
+  const total = subtotal + deliveryCharge;
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] px-5 py-8 text-[#111] md:px-10">
@@ -53,7 +74,35 @@ export default function Checkout() {
           </section>
         )}
 
-        {!orderPlaced && <section className="grid gap-10 py-10 lg:grid-cols-[1fr_360px]">
+        {!orderPlaced && (
+          <>
+            {validationMessage && (
+              <div className="mt-8 border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800">
+                    !
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-amber-700">
+                      Complete Your Order
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-amber-950">
+                      {validationMessage}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setValidationMessage("")}
+                    className="text-lg leading-none text-amber-700 transition hover:text-amber-950"
+                    aria-label="Close message"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <section className="grid gap-10 py-10 lg:grid-cols-[1fr_360px]">
           <form className="space-y-7">
             <div>
               <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">
@@ -116,12 +165,61 @@ export default function Checkout() {
                 Payment Method
               </h2>
 
-              <div className="mt-5 border border-black/15 bg-white p-5">
-                <label className="flex items-center gap-3 text-sm">
-                  <input type="radio" name="payment" defaultChecked />
-                  Cash on Delivery
-                </label>
+              <div className="mt-5 space-y-3">
+                {["Cash on Delivery", "bKash", "Nagad"].map((method) => (
+                  <label
+                    key={method}
+                    className={`flex cursor-pointer items-center gap-3 border bg-white p-5 transition ${
+                      paymentMethod === method ? "border-black" : "border-black/15"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={method}
+                      checked={paymentMethod === method}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <span className="text-sm font-medium">{method}</span>
+                  </label>
+                ))}
               </div>
+
+              {paymentMethod !== "Cash on Delivery" && (
+                <div className="mt-4 border border-black/10 bg-white p-5">
+                  <div className="flex items-center justify-between gap-4 border border-black/10 bg-[#f7f7f5] p-4">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">
+                        {paymentMethod} Send Money Number
+                      </p>
+                      <p className="mt-1 text-base font-semibold tracking-wide">01897523321</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText("01897523321");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1800);
+                      }}
+                      className="shrink-0 border border-black bg-black px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.15em] text-white transition hover:bg-black/80"
+                    >
+                      {copied ? "Copied ✓" : "Copy"}
+                    </button>
+                  </div>
+                  <p className="mt-3 text-xs leading-6 text-black/60">
+                    Send Money to this number using {paymentMethod}, then enter your Transaction ID below.
+                  </p>
+                  <label className="mt-4 block text-[9px] font-bold uppercase tracking-[0.18em]">
+                    Transaction ID
+                  </label>
+                  <input
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    placeholder="Enter transaction ID"
+                    className="mt-2 w-full border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                  />
+                </div>
+              )}
             </div>
           </form>
 
@@ -131,7 +229,7 @@ export default function Checkout() {
             </h2>
 
             <div className="mt-6 space-y-4">
-              {cartItems.map((item, index) => (
+              {checkoutItems.map((item, index) => (
                 <div key={`${item.name}-${index}`} className="flex justify-between gap-4 text-sm">
                   <div>
                     <p className="font-medium">{item.name}</p>
@@ -144,9 +242,19 @@ export default function Checkout() {
               ))}
             </div>
 
-            <div className="mt-6 flex justify-between border-t border-black/10 pt-5 text-sm">
-              <span>Subtotal</span>
-              <span className="font-semibold">৳{subtotal.toLocaleString()}</span>
+            <div className="mt-6 space-y-3 border-t border-black/10 pt-5 text-sm">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-semibold">৳{subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-black/60">
+                <span>Delivery Charge</span>
+                <span>৳{deliveryCharge.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-t border-black/10 pt-3 text-base">
+                <span className="font-semibold">Total</span>
+                <span className="font-bold">৳{total.toLocaleString()}</span>
+              </div>
             </div>
 
             <button
@@ -157,7 +265,9 @@ export default function Checkout() {
               Place Order
             </button>
           </aside>
-        </section>}
+            </section>
+          </>
+        )}
       </div>
     </main>
   );
