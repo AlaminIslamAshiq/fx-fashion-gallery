@@ -61,8 +61,12 @@ export default function Checkout() {
   };
 
   const subtotal = checkoutItems.reduce((total, item) => {
-    const price = Number(item.price.replace(/[^0-9]/g, ""));
-    return total + price * item.quantity;
+    const rawPrice = item.salePrice ?? item.price ?? 0;
+    const price = typeof rawPrice === "number"
+      ? rawPrice
+      : Number(String(rawPrice).replace(/[^0-9.]/g, "")) || 0;
+
+    return total + price * Number(item.quantity || 0);
   }, 0);
 
   const deliveryCharge = customer.city.trim() ? (customer.city.trim().toLowerCase() === "dhaka" ? 70 : 120) : 0;

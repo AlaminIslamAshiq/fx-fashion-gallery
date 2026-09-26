@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase.js";
 
 const defaultProducts = [
   { category: "Men", name: "Essential Oversized Shirt", price: "৳1,890", image: "photo-1602810318383-e386cc2a3ccf" },
@@ -11,10 +13,37 @@ const defaultProducts = [
 
 export default function Shop() {
   const { addToCart } = useCart();
-  const customProducts = JSON.parse(localStorage.getItem("fx_products") || "[]");
+  const [customProducts, setCustomProducts] = useState([]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+      setCustomProducts(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const products = [...defaultProducts, ...customProducts];
   const [activeFilter, setActiveFilter] = useState("All Products");
-  const filteredProducts = activeFilter === "All Products" || activeFilter === "New Arrivals" || activeFilter === "Sale" ? products : products.filter((product) => product.category === activeFilter);
+
+  const getSalePrice = (product) => {
+    const basePrice = Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
+    const discountValue = Number(product.discountValue || 0);
+
+    if (!product.discountEnabled || discountValue <= 0) return basePrice;
+
+    return product.discountType === "percentage"
+      ? Math.max(0, basePrice - (basePrice * discountValue / 100))
+      : Math.max(0, basePrice - discountValue);
+  };
+
+  const filteredProducts = activeFilter === "All Products"
+    ? products
+    : activeFilter === "New Arrivals"
+      ? products.filter((product) => product.newArrival === true)
+      : activeFilter === "Sale"
+        ? products.filter((product) => product.discountEnabled === true && Number(product.discountValue || 0) > 0)
+        : products.filter((product) => product.category === activeFilter);
   return (
     <main className="min-h-screen bg-[#f7f7f5] px-5 py-8 text-[#111] md:px-10">
       <div className="mx-auto max-w-7xl">
@@ -36,7 +65,23 @@ export default function Shop() {
               </div>
               <p className="mt-4 text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">{product.category}</p>
               <h2 className="mt-1 text-sm font-medium">{product.name}</h2>
-              <p className="mt-2 text-sm font-semibold">{product.price}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold">৳{getSalePrice(product).toLocaleString()}</p>
+
+                {product.discountEnabled && getSalePrice(product) < (Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0) && (
+                  <>
+                    <p className="text-xs text-black/40 line-through">
+                      ৳{(Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0).toLocaleString()}
+                    </p>
+
+                    <span className="bg-black px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-white">
+                      {product.discountType === "percentage"
+                        ? product.discountValue + "% OFF"
+                        : "৳" + Number(product.discountValue).toLocaleString() + " OFF"}
+                    </span>
+                  </>
+                )}
+              </div>
             </Link>
           ))}
         </section>

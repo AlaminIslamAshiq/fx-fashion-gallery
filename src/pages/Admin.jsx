@@ -14,7 +14,22 @@ export default function Admin() {
 
   const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem("fx_orders") || "[]"));
   const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem("fx_products") || "[]"));
-  const [newProduct, setNewProduct] = useState({ name: "", category: "Men", price: "", description: "", imageData: "" });
+  const [newProduct, setNewProduct] = useState({
+  name: "",
+  category: "Men",
+  price: "",
+  discountEnabled: false,
+  discountType: "percentage",
+  discountValue: "",
+  stock: "",
+  sizes: "",
+  rating: "5",
+  featured: false,
+  newArrival: false,
+  active: true,
+  description: "",
+  imageData: ""
+});
   const [imageName, setImageName] = useState("");
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
@@ -132,6 +147,36 @@ export default function Admin() {
   };
 
   const totalSales = orders.reduce((total, order) => total + Number(order.subtotal || 0), 0);
+
+  const customers = Object.values(
+    orders.reduce((map, order) => {
+      const customer = order.customer || {};
+      const key = customer.phone?.trim() || customer.name?.trim() || order.id;
+
+      if (!map[key]) {
+        map[key] = {
+          name: customer.name || "Unknown Customer",
+          phone: customer.phone || "",
+          address: customer.address || "",
+          city: customer.city || "",
+          area: customer.area || "",
+          orders: 0,
+          totalSpent: 0,
+          lastOrder: order.createdAt || ""
+        };
+      }
+
+      map[key].orders += 1;
+      map[key].totalSpent += Number(order.total || 0);
+
+      if (new Date(order.createdAt || 0) > new Date(map[key].lastOrder || 0)) {
+        map[key].lastOrder = order.createdAt || "";
+      }
+
+      return map;
+    }, {})
+  ).sort((a, b) => new Date(b.lastOrder || 0) - new Date(a.lastOrder || 0));
+
   const addProduct = async (e) => {
     e.preventDefault();
     if (newProduct.name.trim() == "" || newProduct.price.trim() == "" || newProduct.imageData == "") {
@@ -143,11 +188,35 @@ export default function Admin() {
         name: newProduct.name.trim(),
         category: newProduct.category,
         price: newProduct.price,
+        discountEnabled: newProduct.discountEnabled,
+        discountType: newProduct.discountType,
+        discountValue: newProduct.discountValue,
+        stock: newProduct.stock,
+        sizes: newProduct.sizes,
+        rating: newProduct.rating,
+        featured: newProduct.featured,
+        newArrival: newProduct.newArrival,
+        active: newProduct.active,
         description: newProduct.description,
         imageData: newProduct.imageData,
         createdAt: new Date().toISOString(),
       });
-      setNewProduct({ name: "", category: "Men", price: "", description: "", imageData: "" });
+      setNewProduct({
+        name: "",
+        category: "Men",
+        price: "",
+        discountEnabled: false,
+        discountType: "percentage",
+        discountValue: "",
+        stock: "",
+        sizes: "",
+        rating: "5",
+        featured: false,
+        newArrival: false,
+        active: true,
+        description: "",
+        imageData: ""
+      });
       setImageName("");
       setNotice("Product added successfully.");
     } catch (error) {
@@ -253,7 +322,16 @@ export default function Admin() {
             ["Dashboard", LayoutDashboard],
             ["Orders", ShoppingCart],
             ["Products", Package],
-            ["Settings", Settings],
+            ["Customers", Package],
+            ["Homepage", LayoutDashboard],
+            ["Theme & Appearance", Settings],
+            ["Store Settings", Settings],
+            ["Payment", ShoppingCart],
+            ["Delivery", Package],
+            ["Navigation", Menu],
+            ["Social Links", Menu],
+            ["SEO", Settings],
+            ["Admin & Security", Settings],
           ].map(([name, Icon]) => (
             <button
               key={name}
@@ -304,6 +382,62 @@ export default function Admin() {
           </div>
         </section>} 
 
+        {activeTab === "Customers" && <section className="mt-8 border border-black/10 bg-white">
+          <div className="border-b border-black/10 p-6">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Customers</h2>
+            <p className="mt-2 text-xs text-black/45">
+              Customer profiles are automatically created from completed orders.
+            </p>
+          </div>
+
+          {customers.length === 0 ? (
+            <div className="p-10 text-center">
+              <p className="text-sm font-semibold">No customers yet.</p>
+              <p className="mt-2 text-xs text-black/45">
+                Customer information will appear here after an order is placed.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px] text-left">
+                <thead>
+                  <tr className="border-b border-black/10 bg-black/[0.02]">
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Customer</th>
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Phone</th>
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Location</th>
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Orders</th>
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Total Spent</th>
+                    <th className="px-5 py-4 text-[9px] font-bold uppercase tracking-[0.16em]">Last Order</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((customer, index) => (
+                    <tr key={customer.phone || customer.name || index} className="border-b border-black/5">
+                      <td className="px-5 py-5">
+                        <p className="text-sm font-semibold">{customer.name}</p>
+                        <p className="mt-1 text-xs text-black/40">{customer.address || "No address"}</p>
+                      </td>
+                      <td className="px-5 py-5 text-sm">{customer.phone || "—"}</td>
+                      <td className="px-5 py-5 text-sm">
+                        {[customer.area, customer.city].filter(Boolean).join(", ") || "—"}
+                      </td>
+                      <td className="px-5 py-5 text-sm font-semibold">{customer.orders}</td>
+                      <td className="px-5 py-5 text-sm font-semibold">
+                        ৳{customer.totalSpent.toLocaleString()}
+                      </td>
+                      <td className="px-5 py-5 text-xs text-black/55">
+                        {customer.lastOrder
+                          ? new Date(customer.lastOrder).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>}
+
         {activeTab === "Products" && <section className="mt-8 border border-black/10 bg-white">
           <div className="border-b border-black/10 p-6">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Add Product</h2>
@@ -314,6 +448,67 @@ export default function Admin() {
               <option>Men</option><option>Women</option><option>Kids</option>
             </select>
             <input value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="Price" inputMode="numeric" className="border border-black/15 px-4 py-3 text-sm outline-none" />
+
+            <div className="border border-black/10 p-4 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Discount</p>
+                  <p className="mt-1 text-xs text-black/45">Optional sale pricing for this product.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setNewProduct({ ...newProduct, discountEnabled: !newProduct.discountEnabled })}
+                  className={"relative h-7 w-12 rounded-full transition " + (newProduct.discountEnabled ? "bg-black" : "bg-black/15")}
+                >
+                  <span className={"absolute top-1 h-5 w-5 rounded-full bg-white transition " + (newProduct.discountEnabled ? "left-6" : "left-1")} />
+                </button>
+              </div>
+
+              {newProduct.discountEnabled && (
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <select
+                    value={newProduct.discountType}
+                    onChange={(e) => setNewProduct({ ...newProduct, discountType: e.target.value })}
+                    className="border border-black/15 px-4 py-3 text-sm outline-none"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+
+                  <input
+                    value={newProduct.discountValue}
+                    onChange={(e) => setNewProduct({ ...newProduct, discountValue: e.target.value })}
+                    placeholder={newProduct.discountType === "percentage" ? "Discount %" : "Discount Amount"}
+                    inputMode="decimal"
+                    className="border border-black/15 px-4 py-3 text-sm outline-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            <input value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="Stock Quantity" inputMode="numeric" className="border border-black/15 px-4 py-3 text-sm outline-none" />
+
+            <input value={newProduct.sizes} onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })} placeholder="Sizes (e.g. S, M, L, XL)" className="border border-black/15 px-4 py-3 text-sm outline-none" />
+
+            <input value={newProduct.rating} onChange={(e) => setNewProduct({ ...newProduct, rating: e.target.value })} placeholder="Rating (1-5)" inputMode="decimal" className="border border-black/15 px-4 py-3 text-sm outline-none" />
+
+            <div className="flex flex-wrap gap-3 md:col-span-2">
+              <label className="flex items-center gap-2 border border-black/10 px-4 py-3 text-xs">
+                <input type="checkbox" checked={newProduct.featured} onChange={(e) => setNewProduct({ ...newProduct, featured: e.target.checked })} />
+                Featured Product
+              </label>
+
+              <label className="flex items-center gap-2 border border-black/10 px-4 py-3 text-xs">
+                <input type="checkbox" checked={newProduct.newArrival} onChange={(e) => setNewProduct({ ...newProduct, newArrival: e.target.checked })} />
+                New Arrival
+              </label>
+
+              <label className="flex items-center gap-2 border border-black/10 px-4 py-3 text-xs">
+                <input type="checkbox" checked={newProduct.active} onChange={(e) => setNewProduct({ ...newProduct, active: e.target.checked })} />
+                Product Active
+              </label>
+            </div>
+
             <input type="file" accept="image/*" onChange={handleImage} className="border border-black/15 px-4 py-3 text-sm" />
             <textarea value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Description" rows="4" className="border border-black/15 px-4 py-3 text-sm outline-none md:col-span-2" />
             {imageName && <p className="text-xs text-black/50 md:col-span-2">Selected: {imageName}</p>}
@@ -327,7 +522,25 @@ export default function Admin() {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs uppercase tracking-wider text-black/40">{product.category}</p>
                   <h3 className="mt-1 font-semibold">{product.name}</h3>
-                  <p className="mt-1 text-sm">৳{Number(product.price).toLocaleString()}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold">৳{Number(product.price).toLocaleString()}</span>
+                    {product.discountEnabled && Number(product.discountValue) > 0 && (
+                      <span className="bg-black px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white">
+                        {product.discountType === "percentage" ? product.discountValue + "% OFF" : "৳" + Number(product.discountValue).toLocaleString() + " OFF"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2 text-[9px] font-bold uppercase tracking-wider">
+                    {product.stock !== "" && <span className="border border-black/10 px-2 py-1 text-black/50">Stock {product.stock}</span>}
+                    {product.rating && <span className="border border-black/10 px-2 py-1 text-black/50">★ {product.rating}</span>}
+                    {product.featured && <span className="border border-black/10 px-2 py-1">Featured</span>}
+                    {product.newArrival && <span className="border border-black/10 px-2 py-1">New</span>}
+                    <span className={"border px-2 py-1 " + (product.active === false ? "border-red-200 text-red-600" : "border-green-200 text-green-700")}>
+                      {product.active === false ? "Hidden" : "Active"}
+                    </span>
+                  </div>
+
                   <button type="button" onClick={() => deleteProduct(product.id)} className="mt-3 border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-red-700 transition hover:border-red-300 hover:bg-red-100">Delete</button>
                 </div>
               </div>)}
@@ -433,7 +646,7 @@ export default function Admin() {
                                     key={paymentStatus}
                                     type="button"
                                     onClick={() => {
-                                      updatePaymentStatus(order.id, paymentStatus);
+                                      updatePaymentStatus(order.firestoreId, paymentStatus);
                                       setOpenPaymentId(null);
                                     }}
                                     className={`mb-1 w-full border px-3 py-2 text-left text-xs font-semibold transition last:mb-0 hover:shadow-sm ${getPaymentStatusClass(paymentStatus)}`}
