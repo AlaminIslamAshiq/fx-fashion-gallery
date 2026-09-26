@@ -36,6 +36,35 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [homepageSettings, setHomepageSettings] = useState(() => {
+    try {
+      return {
+        heroTitle: "Modern fashion. Timeless style.",
+        heroSubtitle: "Curated fashion for Men, Women and Kids.",
+        heroButtonText: "Shop Collection",
+        heroButtonLink: "/shop",
+        showHero: true,
+        showCategories: true,
+        showFeatured: true,
+        showNewArrivals: true,
+        showBenefits: true,
+        ...JSON.parse(localStorage.getItem("fx_homepage_settings") || "{}"),
+      };
+    } catch {
+      return {
+        heroTitle: "Modern fashion. Timeless style.",
+        heroSubtitle: "Curated fashion for Men, Women and Kids.",
+        heroButtonText: "Shop Collection",
+        heroButtonLink: "/shop",
+        showHero: true,
+        showCategories: true,
+        showFeatured: true,
+        showNewArrivals: true,
+        showBenefits: true,
+      };
+    }
+  });
+
   const [siteSettings, setSiteSettings] = useState(() => {
     try {
       return {
@@ -108,6 +137,12 @@ export default function Admin() {
     localStorage.setItem("fx_site_settings", JSON.stringify(siteSettings));
     window.dispatchEvent(new Event("fx-settings-updated"));
     setNotice("Website settings saved successfully.");
+  };
+
+  const saveHomepageSettings = () => {
+    localStorage.setItem("fx_homepage_settings", JSON.stringify(homepageSettings));
+    window.dispatchEvent(new Event("fx-homepage-updated"));
+    setNotice("Homepage settings saved successfully.");
   };
 
   if (authLoading) {
@@ -709,6 +744,90 @@ export default function Admin() {
             </div>
           )}
         </section>}
+
+        {activeTab === "Homepage" && (
+          <section className="mt-8 space-y-6">
+
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Homepage Control Center</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Hero Section</h2>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <input
+                  value={homepageSettings.heroTitle}
+                  onChange={(e) => setHomepageSettings({ ...homepageSettings, heroTitle: e.target.value })}
+                  placeholder="Hero Title"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={homepageSettings.heroSubtitle}
+                  onChange={(e) => setHomepageSettings({ ...homepageSettings, heroSubtitle: e.target.value })}
+                  placeholder="Hero Subtitle"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={homepageSettings.heroButtonText}
+                  onChange={(e) => setHomepageSettings({ ...homepageSettings, heroButtonText: e.target.value })}
+                  placeholder="Button Text"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={homepageSettings.heroButtonLink}
+                  onChange={(e) => setHomepageSettings({ ...homepageSettings, heroButtonLink: e.target.value })}
+                  placeholder="Button Link"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+              </div>
+            </div>
+
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Homepage Sections</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Visibility Controls</h2>
+
+              <div className="mt-6 grid gap-3 md:grid-cols-2">
+                {[
+                  ["showHero", "Hero Section"],
+                  ["showCategories", "Categories"],
+                  ["showFeatured", "Featured Products"],
+                  ["showNewArrivals", "New Arrivals"],
+                  ["showBenefits", "Benefits Section"],
+                ].map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-center justify-between border border-black/10 p-4"
+                  >
+                    <span className="text-sm font-semibold">{label}</span>
+                    <input
+                      type="checkbox"
+                      checked={homepageSettings[key]}
+                      onChange={(e) =>
+                        setHomepageSettings({
+                          ...homepageSettings,
+                          [key]: e.target.checked
+                        })
+                      }
+                      className="h-5 w-5 accent-black"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={saveHomepageSettings}
+                className="rounded-xl bg-black px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+              >
+                Save Homepage Settings
+              </button>
+            </div>
+
+          </section>
+        )}
 
         {activeTab === "Settings" && (
           <section className="mt-8 space-y-6">
