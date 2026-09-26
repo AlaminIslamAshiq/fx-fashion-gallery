@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "../firebase.js";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../firebase.js";
+import { LayoutDashboard, ShoppingCart, Package, Settings, LogOut, Menu, X, TrendingUp, Clock3, CheckCircle2 } from "lucide-react";
 
 export default function Admin() {
-  const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem("fx_admin_auth") === "true");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -11,11 +18,92 @@ export default function Admin() {
   const [imageName, setImageName] = useState("");
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
+  const [activeTab, setActiveTab] = useState("Dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [siteSettings, setSiteSettings] = useState(() => {
+    try {
+      return {
+        storeName: "FX Fashion Gallery",
+        tagline: "Modern fashion. Timeless style.",
+        primaryColor: "#111111",
+        accentColor: "#f7f7f5",
+        phone: "01897523321",
+        whatsapp: "01897523321",
+        currency: "৳",
+        dhakaDelivery: 70,
+        outsideDelivery: 120,
+        ...JSON.parse(localStorage.getItem("fx_site_settings") || "{}"),
+      };
+    } catch {
+      return {
+        storeName: "FX Fashion Gallery",
+        tagline: "Modern fashion. Timeless style.",
+        primaryColor: "#111111",
+        accentColor: "#f7f7f5",
+        phone: "01897523321",
+        whatsapp: "01897523321",
+        currency: "৳",
+        dhakaDelivery: 70,
+        outsideDelivery: 120,
+      };
+    }
+  });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setLoggedIn(Boolean(user));
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const firebaseOrders = snapshot.docs.map((item) => ({ ...item.data(), id: item.data().id || item.id, firestoreId: item.id }));
+      firebaseOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setOrders(firebaseOrders);
+    }, () => {
+      setNotice("Could not load orders from Firebase.");
+    });
+    return () => unsubscribe();
+  }, [loggedIn]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+      const firebaseProducts = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+      setProducts(firebaseProducts);
+    }, () => {
+      setNotice("Could not load products from Firebase.");
+    });
+    return () => unsubscribe();
+  }, [loggedIn]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+      const firebaseProducts = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+      setProducts(firebaseProducts);
+    }, () => {
+      setNotice("Could not load products from Firebase.");
+    });
+    return () => unsubscribe();
+  }, [loggedIn]);
+
+  const saveSiteSettings = () => {
+    localStorage.setItem("fx_site_settings", JSON.stringify(siteSettings));
+    window.dispatchEvent(new Event("fx-settings-updated"));
+    setNotice("Website settings saved successfully.");
+  };
+
+  if (authLoading) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] text-sm text-black/50">Loading Admin...</main>;
+  }
 
   if (!loggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] px-5 text-[#111]">
-        <form onSubmit={(e) => { e.preventDefault(); if (password === "FXAdmin2026") { sessionStorage.setItem("fx_admin_auth", "true"); setLoggedIn(true); } else { setNotice("Incorrect password. Please check your admin password and try again."); } }} className="w-full max-w-sm border border-black/10 bg-white p-8">
+        <form onSubmit={async (e) => { e.preventDefault(); setNotice(""); try { await signInWithEmailAndPassword(auth, email.trim(), password); } catch (error) { setNotice("Login failed. Please check your email and password."); } }} className="w-full max-w-sm border border-black/10 bg-white p-8">
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin Email" autoComplete="email" className="mt-6 w-full border border-black/15 px-4 py-3 text-sm outline-none focus:border-black" />
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">FX Fashion Gallery</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">Admin Login</h1>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Admin Password" className="mt-7 w-full border border-black/15 px-4 py-4 text-sm outline-none focus:border-black" />
@@ -27,34 +115,55 @@ export default function Admin() {
 
 
 
-  const updateStatus = (id, status) => {
-    const updatedOrders = orders.map((order) => order.id === id ? { ...order, status } : order);
-    setOrders(updatedOrders);
-    localStorage.setItem("fx_orders", JSON.stringify(updatedOrders));
+  const updateStatus = async (id, status) => {
+    try {
+      await updateDoc(doc(db, "orders", id), { status });
+    } catch (error) {
+      setNotice("Firebase error: " + (error.code || error.message || "Unknown error"));
+    }
   };
 
-  const updatePaymentStatus = (id, paymentStatus) => {
-    const updatedOrders = orders.map((order) => order.id === id ? { ...order, paymentStatus } : order);
-    setOrders(updatedOrders);
-    localStorage.setItem("fx_orders", JSON.stringify(updatedOrders));
+  const updatePaymentStatus = async (id, paymentStatus) => {
+    try {
+      await updateDoc(doc(db, "orders", id), { paymentStatus });
+    } catch (error) {
+      setNotice("Could not update payment status.");
+    }
   };
 
   const totalSales = orders.reduce((total, order) => total + Number(order.subtotal || 0), 0);
-  const addProduct = (e) => {
+  const addProduct = async (e) => {
     e.preventDefault();
-    if (!newProduct.name.trim() || !newProduct.price.trim() || !newProduct.imageData) { setNotice("Please add the product name, price and image before saving."); return; }
-    const product = { ...newProduct, id: Date.now() };
-    const updatedProducts = [...products, product];
-    setProducts(updatedProducts);
-    localStorage.setItem("fx_products", JSON.stringify(updatedProducts));
-    setNewProduct({ name: "", category: "Men", price: "", description: "", imageData: "" });
-    setImageName("");
+    if (newProduct.name.trim() == "" || newProduct.price.trim() == "" || newProduct.imageData == "") {
+      setNotice("Please add the product name, price and image before saving.");
+      return;
+    }
+    try {
+      await addDoc(collection(db, "products"), {
+        name: newProduct.name.trim(),
+        category: newProduct.category,
+        price: newProduct.price,
+        description: newProduct.description,
+        imageData: newProduct.imageData,
+        createdAt: new Date().toISOString(),
+      });
+      setNewProduct({ name: "", category: "Men", price: "", description: "", imageData: "" });
+      setImageName("");
+      setNotice("Product added successfully.");
+    } catch (error) {
+      setNotice("Could not save product to Firebase.");
+    }
   };
-  const deleteProduct = (id) => {
-    const updatedProducts = products.filter((product) => product.id !== id);
-    setProducts(updatedProducts);
-    localStorage.setItem("fx_products", JSON.stringify(updatedProducts));
+
+  const deleteProduct = async (id) => {
+    try {
+      await deleteDoc(doc(db, "products", id));
+      setNotice("Product deleted successfully.");
+    } catch (error) {
+      setNotice("Could not delete product from Firebase.");
+    }
   };
+
   const handleImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -110,16 +219,73 @@ export default function Admin() {
         </div>
       )}
       <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex items-center justify-between rounded-2xl border border-black/10 bg-[#111111] px-5 py-4 text-white shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="rounded-xl border border-white/15 p-2 transition hover:bg-white/10 lg:hidden"
+              aria-label="Toggle admin navigation"
+            >
+              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-white/40">FX Fashion Gallery</p>
+              <p className="mt-1 text-sm font-semibold">Admin Control Center</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut(auth);
+              setLoggedIn(false);
+            }}
+            className="flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/65 transition hover:bg-white/10 hover:text-white"
+          >
+            <LogOut size={15} />
+            Logout
+          </button>
+        </div>
+
+        <div className={`${sidebarOpen ? "block" : "hidden"} mb-6 grid gap-2 rounded-2xl border border-black/10 bg-white p-3 shadow-sm lg:grid lg:grid-cols-4`}>
+          {[
+            ["Dashboard", LayoutDashboard],
+            ["Orders", ShoppingCart],
+            ["Products", Package],
+            ["Settings", Settings],
+          ].map(([name, Icon]) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => {
+                setActiveTab(name);
+                setSidebarOpen(false);
+              }}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-xs font-semibold transition ${
+                activeTab === name
+                  ? "bg-black text-white"
+                  : "text-black/55 hover:bg-black/5 hover:text-black"
+              }`}
+            >
+              <Icon size={17} strokeWidth={1.7} />
+              {name}
+            </button>
+          ))}
+        </div>
         <header className="border-b border-black/10 pb-7">
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">
+            Control Center / {activeTab}
+          </p>
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">
             FX Fashion Gallery
           </p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight md:text-5xl">
-            Admin Dashboard
+            {activeTab}
           </h1>
         </header>
 
-        <section className="grid gap-4 py-8 md:grid-cols-3">
+        {activeTab === "Dashboard" && <section className="grid gap-4 py-8 md:grid-cols-3">
           <div className="border border-black/10 bg-white p-6">
             <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Total Orders</p>
             <p className="mt-3 text-3xl font-semibold">{orders.length}</p>
@@ -136,9 +302,9 @@ export default function Admin() {
               {orders.filter((order) => order.status === "Pending").length}
             </p>
           </div>
-        </section>
+        </section>} 
 
-        <section className="mt-8 border border-black/10 bg-white">
+        {activeTab === "Products" && <section className="mt-8 border border-black/10 bg-white">
           <div className="border-b border-black/10 p-6">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Add Product</h2>
           </div>
@@ -167,9 +333,9 @@ export default function Admin() {
               </div>)}
             </div>}
           </div>
-        </section>
+        </section>}
 
-        <section className="mt-8 border border-black/10 bg-white">
+        {activeTab === "Orders" && <section className="mt-8 border border-black/10 bg-white">
           <div className="border-b border-black/10 p-6">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Recent Orders</h2>
           </div>
@@ -215,7 +381,7 @@ export default function Admin() {
                                   key={status}
                                   type="button"
                                   onClick={() => {
-                                    updateStatus(order.id, status);
+                                    updateStatus(order.firestoreId, status);
                                     setOpenStatusId(null);
                                   }}
                                   className={`mb-1 w-full border px-3 py-2 text-left text-xs font-semibold transition last:mb-0 hover:shadow-sm ${getOrderStatusClass(status)}`}
@@ -329,7 +495,121 @@ export default function Admin() {
               })}
             </div>
           )}
-        </section>
+        </section>}
+
+        {activeTab === "Settings" && (
+          <section className="mt-8 space-y-6">
+
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Store Identity</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Brand & Contact</h2>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <input
+                  value={siteSettings.storeName}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, storeName: e.target.value })}
+                  placeholder="Store Name"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={siteSettings.tagline}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, tagline: e.target.value })}
+                  placeholder="Website Tagline"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={siteSettings.phone}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, phone: e.target.value })}
+                  placeholder="Phone Number"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={siteSettings.whatsapp}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, whatsapp: e.target.value })}
+                  placeholder="WhatsApp Number"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+              </div>
+            </div>
+
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Appearance</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Theme Controls</h2>
+
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <label className="flex items-center justify-between border border-black/10 p-4">
+                  <div>
+                    <p className="text-sm font-semibold">Primary Color</p>
+                    <p className="mt-1 text-xs text-black/45">Buttons and main accents</p>
+                  </div>
+                  <input
+                    type="color"
+                    value={siteSettings.primaryColor}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, primaryColor: e.target.value })}
+                    className="h-10 w-14 cursor-pointer border-0 bg-transparent"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between border border-black/10 p-4">
+                  <div>
+                    <p className="text-sm font-semibold">Background Color</p>
+                    <p className="mt-1 text-xs text-black/45">Website background</p>
+                  </div>
+                  <input
+                    type="color"
+                    value={siteSettings.accentColor}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, accentColor: e.target.value })}
+                    className="h-10 w-14 cursor-pointer border-0 bg-transparent"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Commerce</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Delivery & Currency</h2>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <input
+                  value={siteSettings.currency}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, currency: e.target.value })}
+                  placeholder="Currency Symbol"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={siteSettings.dhakaDelivery}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, dhakaDelivery: e.target.value })}
+                  placeholder="Dhaka Delivery"
+                  inputMode="numeric"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+
+                <input
+                  value={siteSettings.outsideDelivery}
+                  onChange={(e) => setSiteSettings({ ...siteSettings, outsideDelivery: e.target.value })}
+                  placeholder="Outside Dhaka Delivery"
+                  inputMode="numeric"
+                  className="border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={saveSiteSettings}
+                className="rounded-xl bg-black px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+              >
+                Save All Website Settings
+              </button>
+            </div>
+
+          </section>
+        )}
       </div>
     </main>
   );

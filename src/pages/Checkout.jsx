@@ -1,6 +1,8 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase.js";
 
 export default function Checkout() {
   const { cartItems, clearCart } = useCart();
@@ -26,7 +28,7 @@ export default function Checkout() {
   const [copied, setCopied] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     const missingFields = [];
 
     if (!customer.name.trim()) missingFields.push("Full Name");
@@ -47,8 +49,12 @@ export default function Checkout() {
 
     const newOrderId = `FX-${Date.now().toString().slice(-8)}`;
     const order = { id: newOrderId, customer, items: checkoutItems, subtotal, deliveryCharge, total, paymentMethod, transactionId: paymentMethod === "Cash on Delivery" ? "" : transactionId.trim(), paymentStatus: paymentMethod === "Cash on Delivery" ? "Not Required" : "Pending", status: "Pending", createdAt: new Date().toISOString() };
-    const existingOrders = JSON.parse(localStorage.getItem("fx_orders") || "[]");
-    localStorage.setItem("fx_orders", JSON.stringify([...existingOrders, order]));
+    try {
+      await addDoc(collection(db, "orders"), order);
+    } catch (error) {
+      setValidationMessage("Could not place the order. Please try again.");
+      return;
+    }
     setOrderId(newOrderId);
     setOrderPlaced(true);
     if (!directProduct) clearCart();

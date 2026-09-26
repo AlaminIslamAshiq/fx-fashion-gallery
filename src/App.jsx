@@ -10,6 +10,17 @@ import Admin from './pages/Admin.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 
 function HomePage() {
+  const [siteSettings, setSiteSettings] = useState(getSiteSettings);
+
+  useEffect(() => {
+    const syncSettings = () => setSiteSettings(getSiteSettings());
+    window.addEventListener("storage", syncSettings);
+    window.addEventListener("fx-settings-updated", syncSettings);
+    return () => {
+      window.removeEventListener("storage", syncSettings);
+      window.removeEventListener("fx-settings-updated", syncSettings);
+    };
+  }, []);
   const [searchOpen, setSearchOpen] = useState(false)
   const [addedProduct, setAddedProduct] = useState("")
   const { cartCount, addToCart } = useCart()
