@@ -23,6 +23,18 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   });
 
   useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "theme"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setSiteSettings((current) => ({ ...current, ...settings }));
+        localStorage.setItem("fx_theme_settings", JSON.stringify(settings));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "settings", "homepage"), (snapshot) => {
       if (snapshot.exists()) {
         const settings = snapshot.data();
@@ -58,7 +70,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   const [addedProduct, setAddedProduct] = useState("")
   const { cartCount, addToCart } = useCart()
   return (
-    <div className="min-h-screen bg-[#f7f7f5] text-[#111111]">
+    <div className="min-h-screen" style={{ backgroundColor: siteSettings.accentColor, color: siteSettings.primaryColor }}>
 
       <div className="border-b border-white/10 bg-[#111111] px-4 py-2.5 text-center text-[10px] font-medium uppercase tracking-[0.28em] text-white">
         FX Fashion Gallery · New Collection
