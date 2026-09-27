@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
 
 export default function Checkout() {
@@ -27,6 +27,42 @@ export default function Checkout() {
   const [transactionId, setTransactionId] = useState("");
   const [copied, setCopied] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const [paymentSettings, setPaymentSettings] = useState({
+    cashOnDelivery: true,
+    bkashEnabled: true,
+    bkashNumber: "01897523321",
+    nagadEnabled: true,
+    nagadNumber: "01897523321",
+  });
+
+  const [deliverySettings, setDeliverySettings] = useState({
+    dhakaCharge: 70,
+    outsideDhakaCharge: 120,
+  });
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "delivery"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setDeliverySettings((current) => ({ ...current, ...settings }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "payment"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setPaymentSettings((current) => ({ ...current, ...settings }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+
 
   const placeOrder = async () => {
     const missingFields = [];
@@ -69,7 +105,7 @@ export default function Checkout() {
     return total + price * Number(item.quantity || 0);
   }, 0);
 
-  const deliveryCharge = customer.city.trim() ? (customer.city.trim().toLowerCase() === "dhaka" ? 70 : 120) : 0;
+  const deliveryCharge = customer.city.trim() ? (customer.city.trim().toLowerCase() === "dhaka" ? Number(deliverySettings.dhakaCharge || 0) : Number(deliverySettings.outsideDhakaCharge || 0)) : 0;
   const total = subtotal + deliveryCharge;
 
   return (
@@ -189,7 +225,11 @@ export default function Checkout() {
               </h2>
 
               <div className="mt-5 space-y-3">
-                {["Cash on Delivery", "bKash", "Nagad"].map((method) => (
+                {[
+                  ...(paymentSettings.cashOnDelivery ? ["Cash on Delivery"] : []),
+                  ...(paymentSettings.bkashEnabled ? ["bKash"] : []),
+                  ...(paymentSettings.nagadEnabled ? ["Nagad"] : []),
+                ].map((method) => (
                   <label
                     key={method}
                     className={`flex cursor-pointer items-center gap-3 border bg-white p-5 transition ${
@@ -215,12 +255,12 @@ export default function Checkout() {
                       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">
                         {paymentMethod} Send Money Number
                       </p>
-                      <p className="mt-1 text-base font-semibold tracking-wide">01897523321</p>
+                      <p className="mt-1 text-base font-semibold tracking-wide">{paymentMethod === "bKash" ? paymentSettings.bkashNumber : paymentSettings.nagadNumber}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard.writeText("01897523321");
+                        navigator.clipboard.writeText(paymentMethod === "bKash" ? paymentSettings.bkashNumber : paymentSettings.nagadNumber);
                         setCopied(true);
                         setTimeout(() => setCopied(false), 1800);
                       }}

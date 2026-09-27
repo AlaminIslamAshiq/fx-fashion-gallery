@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase.js";
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 import { LayoutDashboard, ShoppingCart, Package, Settings, LogOut, Menu, X, TrendingUp, Clock3, CheckCircle2 } from "lucide-react";
 
@@ -31,10 +31,47 @@ export default function Admin() {
   imageData: ""
 });
   const [imageName, setImageName] = useState("");
+const [editingProductId, setEditingProductId] = useState(null);
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [deliverySettings, setDeliverySettings] = useState(() => {
+    try {
+      return {
+        dhakaCharge: 70,
+        outsideDhakaCharge: 120,
+        ...JSON.parse(localStorage.getItem("fx_delivery_settings") || "{}"),
+      };
+    } catch {
+      return {
+        dhakaCharge: 70,
+        outsideDhakaCharge: 120,
+      };
+    }
+  });
+
+  const [paymentSettings, setPaymentSettings] = useState(() => {
+    try {
+      return {
+        cashOnDelivery: true,
+        bkashEnabled: true,
+        bkashNumber: "01897523321",
+        nagadEnabled: true,
+        nagadNumber: "01897523321",
+        ...JSON.parse(localStorage.getItem("fx_payment_settings") || "{}"),
+      };
+    } catch {
+      return {
+        cashOnDelivery: true,
+        bkashEnabled: true,
+        bkashNumber: "01897523321",
+        nagadEnabled: true,
+        nagadNumber: "01897523321",
+      };
+    }
+  });
+
 
   const [homepageSettings, setHomepageSettings] = useState(() => {
     try {
@@ -139,10 +176,15 @@ export default function Admin() {
     setNotice("Website settings saved successfully.");
   };
 
-  const saveHomepageSettings = () => {
-    localStorage.setItem("fx_homepage_settings", JSON.stringify(homepageSettings));
-    window.dispatchEvent(new Event("fx-homepage-updated"));
-    setNotice("Homepage settings saved successfully.");
+  const saveHomepageSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "homepage"), homepageSettings, { merge: true });
+      localStorage.setItem("fx_homepage_settings", JSON.stringify(homepageSettings));
+      window.dispatchEvent(new Event("fx-homepage-updated"));
+      setNotice("Homepage settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Homepage settings to Firebase.");
+    }
   };
 
   if (authLoading) {
@@ -164,6 +206,26 @@ export default function Admin() {
   }
 
 
+
+  const saveDeliverySettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "delivery"), deliverySettings, { merge: true });
+      localStorage.setItem("fx_delivery_settings", JSON.stringify(deliverySettings));
+      setNotice("Delivery settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Delivery settings to Firebase.");
+    }
+  };
+
+  const savePaymentSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "payment"), paymentSettings, { merge: true });
+      localStorage.setItem("fx_payment_settings", JSON.stringify(paymentSettings));
+      setNotice("Payment settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Payment settings to Firebase.");
+    }
+  };
 
   const updateStatus = async (id, status) => {
     try {
@@ -256,6 +318,63 @@ export default function Admin() {
       setNotice("Product added successfully.");
     } catch (error) {
       setNotice("Could not save product to Firebase.");
+    }
+  };
+
+  const editProduct = (product) => {
+    setEditingProductId(product.id);
+    setNewProduct({
+      name: product.name || "",
+      category: product.category || "Men",
+      price: product.price || "",
+      discountEnabled: product.discountEnabled || false,
+      discountType: product.discountType || "percentage",
+      discountValue: product.discountValue || "",
+      stock: product.stock || "",
+      sizes: product.sizes || "",
+      rating: product.rating || "5",
+      featured: product.featured || false,
+      newArrival: product.newArrival || false,
+      active: product.active !== false,
+      description: product.description || "",
+      imageData: product.imageData || ""
+    });
+    setImageName("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const updateProduct = async (e) => {
+    e.preventDefault();
+
+    if (!editingProductId) return;
+
+    try {
+      await updateDoc(doc(db, "products", editingProductId), {
+        ...newProduct,
+        updatedAt: new Date().toISOString()
+      });
+
+      setEditingProductId(null);
+      setNewProduct({
+        name: "",
+        category: "Men",
+        price: "",
+        discountEnabled: false,
+        discountType: "percentage",
+        discountValue: "",
+        stock: "",
+        sizes: "",
+        rating: "5",
+        featured: false,
+        newArrival: false,
+        active: true,
+        description: "",
+        imageData: ""
+      });
+      setImageName("");
+      setNotice("Product updated successfully.");
+    } catch (error) {
+      setNotice("Could not update product in Firebase.");
     }
   };
 
@@ -477,7 +596,7 @@ export default function Admin() {
           <div className="border-b border-black/10 p-6">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Add Product</h2>
           </div>
-          <form onSubmit={addProduct} className="grid gap-4 p-6 md:grid-cols-2">
+          <form onSubmit={editingProductId ? updateProduct : addProduct} className="grid gap-4 p-6 md:grid-cols-2">
             <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Product Name" className="border border-black/15 px-4 py-3 text-sm outline-none" />
             <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="border border-black/15 px-4 py-3 text-sm outline-none">
               <option>Men</option><option>Women</option><option>Kids</option>
@@ -547,7 +666,7 @@ export default function Admin() {
             <input type="file" accept="image/*" onChange={handleImage} className="border border-black/15 px-4 py-3 text-sm" />
             <textarea value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Description" rows="4" className="border border-black/15 px-4 py-3 text-sm outline-none md:col-span-2" />
             {imageName && <p className="text-xs text-black/50 md:col-span-2">Selected: {imageName}</p>}
-            <button type="submit" className="bg-black px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white md:col-span-2">Add Product</button>
+            <button type="submit" className="bg-black px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white md:col-span-2">{editingProductId ? "Update Product" : "Add Product"}</button>
           </form>
           <div className="border-t border-black/10 p-6">
             <p className="mb-5 text-sm text-black/50">{products.length} custom product(s) saved.</p>
@@ -744,6 +863,141 @@ export default function Admin() {
             </div>
           )}
         </section>}
+
+        {activeTab === "Delivery" && (
+          <section className="mt-8 space-y-6">
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Delivery Settings</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Delivery Charges</h2>
+              <p className="mt-2 text-sm text-black/50">Set the delivery charge customers will see at checkout.</p>
+
+              <div className="mt-8 grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-[0.18em]">
+                    Dhaka Delivery Charge
+                  </label>
+                  <div className="mt-2 flex items-center border border-black/15 bg-white">
+                    <span className="px-4 text-sm text-black/50">৳</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={deliverySettings.dhakaCharge}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, dhakaCharge: e.target.value })}
+                      className="w-full px-2 py-3 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-[0.18em]">
+                    Outside Dhaka Delivery Charge
+                  </label>
+                  <div className="mt-2 flex items-center border border-black/15 bg-white">
+                    <span className="px-4 text-sm text-black/50">৳</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={deliverySettings.outsideDhakaCharge}
+                      onChange={(e) => setDeliverySettings({ ...deliverySettings, outsideDhakaCharge: e.target.value })}
+                      className="w-full px-2 py-3 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={saveDeliverySettings}
+                className="mt-6 bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-black/80"
+              >
+                Save Delivery Settings
+              </button>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Payment" && (
+          <section className="mt-8 space-y-6">
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Payment Settings</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Payment Methods</h2>
+              <p className="mt-2 text-sm text-black/50">Choose which payment methods customers can use at checkout.</p>
+
+              <div className="mt-8 space-y-4">
+
+                <label className="flex items-center justify-between border border-black/10 p-4">
+                  <div>
+                    <p className="font-semibold">Cash on Delivery</p>
+                    <p className="mt-1 text-xs text-black/50">Allow customers to pay when the order is delivered.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={paymentSettings.cashOnDelivery}
+                    onChange={(e) => setPaymentSettings({ ...paymentSettings, cashOnDelivery: e.target.checked })}
+                    className="h-5 w-5"
+                  />
+                </label>
+
+                <div className="border border-black/10 p-4">
+                  <label className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">bKash</p>
+                      <p className="mt-1 text-xs text-black/50">Accept bKash payments.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.bkashEnabled}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bkashEnabled: e.target.checked })}
+                      className="h-5 w-5"
+                    />
+                  </label>
+
+                  {paymentSettings.bkashEnabled && (
+                    <input
+                      value={paymentSettings.bkashNumber}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, bkashNumber: e.target.value })}
+                      placeholder="bKash Number"
+                      className="mt-4 w-full border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                    />
+                  )}
+                </div>
+
+                <div className="border border-black/10 p-4">
+                  <label className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">Nagad</p>
+                      <p className="mt-1 text-xs text-black/50">Accept Nagad payments.</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={paymentSettings.nagadEnabled}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, nagadEnabled: e.target.checked })}
+                      className="h-5 w-5"
+                    />
+                  </label>
+
+                  {paymentSettings.nagadEnabled && (
+                    <input
+                      value={paymentSettings.nagadNumber}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, nagadNumber: e.target.value })}
+                      placeholder="Nagad Number"
+                      className="mt-4 w-full border border-black/15 px-4 py-3 text-sm outline-none focus:border-black"
+                    />
+                  )}
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={savePaymentSettings}
+                className="mt-6 bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white transition hover:bg-black/80"
+              >
+                Save Payment Settings
+              </button>
+            </div>
+          </section>
+        )}
 
         {activeTab === "Homepage" && (
           <section className="mt-8 space-y-6">

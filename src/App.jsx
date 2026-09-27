@@ -8,9 +8,42 @@ import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
 import { CartProvider } from './context/CartContext.jsx'
+import { collection, doc, onSnapshot } from 'firebase/firestore'
+import { db } from './firebase.js'
 
 const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern fashion. Timeless style.", primaryColor: "#111111", accentColor: "#f7f7f5", phone: "01897523321", whatsapp: "01897523321", currency: "৳", dhakaDelivery: 70, outsideDelivery: 120 }; function getSiteSettings() { try { return { ...defaultSiteSettings, ...JSON.parse(localStorage.getItem("fx_site_settings") || "{}") }; } catch { return defaultSiteSettings; } } function HomePage() {
   const [siteSettings, setSiteSettings] = useState(getSiteSettings);
+  const [products, setProducts] = useState([]);
+  const [homepageSettings, setHomepageSettings] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("fx_homepage_settings") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "homepage"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setHomepageSettings(settings);
+        localStorage.setItem("fx_homepage_settings", JSON.stringify(settings));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+      const items = snapshot.docs
+        .map((item) => ({ ...item.data(), id: item.id }))
+        .filter((item) => item.active !== false);
+      setProducts(items);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const syncSettings = () => setSiteSettings(getSiteSettings());
@@ -88,6 +121,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
       <main>
 
+          {homepageSettings.showHero !== false && (
         <section className="relative min-h-[650px] overflow-hidden bg-[#d9d5ce] md:min-h-[760px]">
           <img
             src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=2200&q=90"
@@ -106,21 +140,16 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
               </p>
 
               <h1 className="text-[56px] font-black uppercase leading-[0.86] tracking-[-0.065em] sm:text-7xl md:text-8xl lg:text-[110px]">
-                Style
-                <br />
-                That Defines
-                <br />
-                You.
+                {homepageSettings.heroTitle}
               </h1>
 
               <p className="mt-7 max-w-[440px] text-sm leading-6 text-white/85 md:text-[15px]">
-                Discover elevated everyday fashion curated for modern men,
-                women and kids.
+                {homepageSettings.heroSubtitle}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <a href="/shop" className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white">
-                  Shop Collection
+                <a href={homepageSettings.heroButtonLink || "/shop"} className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white">
+                  {homepageSettings.heroButtonText || "Shop Collection"}
                 </a>
 
                 <button className="border border-white/70 px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-white hover:text-black">
@@ -131,7 +160,9 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
             </div>
           </div>
         </section>
+          )}
 
+        {homepageSettings.showCategories !== false && (
         <section className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
 
           <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
@@ -196,8 +227,103 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
           </div>
         </section>
+        )}
 
 
+            {homepageSettings.showFeatured !== false && (
+          <section className="border-t border-black/10 bg-white">
+            <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
+              <div className="mb-12 flex items-end justify-between">
+                <div>
+                  <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
+                    Selected for you
+                  </p>
+                  <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
+                    Featured Products
+                  </h2>
+                </div>
+
+                <a
+                  href="/shop"
+                  className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block"
+                >
+                  View All
+                </a>
+              </div>
+
+              {products.filter((product) => product.featured === true).length === 0 ? (
+                <div className="border border-black/10 px-6 py-16 text-center">
+                  <p className="text-sm font-semibold">Featured products coming soon.</p>
+                  <p className="mt-2 text-xs text-black/50">
+                    Mark products as Featured from the Admin panel.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {products
+                    .filter((product) => product.featured === true)
+                    .slice(0, 4)
+                    .map((product) => {
+                      const basePrice = Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
+                      const discountValue = Number(product.discountValue || 0);
+                      const salePrice =
+                        product.discountEnabled && discountValue > 0
+                          ? product.discountType === "percentage"
+                            ? Math.max(0, basePrice - (basePrice * discountValue / 100))
+                            : Math.max(0, basePrice - discountValue)
+                          : basePrice;
+
+                      return (
+                        <a
+                          key={product.id}
+                          href={"/product/" + product.id}
+                          className="group block"
+                        >
+                          <div className="relative aspect-[4/5] overflow-hidden bg-[#f1f1ef]">
+                            {product.imageData ? (
+                              <img
+                                src={product.imageData}
+                                alt={product.name || "Product"}
+                                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
+                                FX Fashion Gallery
+                              </div>
+                            )}
+
+                            {product.discountEnabled && discountValue > 0 && (
+                              <span className="absolute left-4 top-4 bg-black px-3 py-2 text-[9px] font-bold uppercase tracking-[0.15em] text-white">
+                                Sale
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="pt-4">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">
+                              {product.category || "Fashion"}
+                            </p>
+                            <h3 className="mt-2 text-sm font-semibold">
+                              {product.name || "Untitled Product"}
+                            </h3>
+                            <div className="mt-3 flex items-center gap-2">
+                              <span className="text-sm font-bold">৳{salePrice}</span>
+                              {salePrice < basePrice && (
+                                <span className="text-xs text-black/35 line-through">
+                                  ৳{basePrice}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </a>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </section>
+          )}
+          {homepageSettings.showNewArrivals !== false && (
         <section className="border-t border-black/10 bg-white">
           <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
 
@@ -303,6 +429,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
             </div>
           </div>
         </section>
+          )}
 
 
         <section className="bg-[#111111] px-5 py-20 text-white md:px-10 md:py-28">
@@ -343,6 +470,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           </div>
         </section>
 
+          {homepageSettings.showBenefits !== false && (
         <section className="border-b border-black/10 bg-white">
           <div className="mx-auto grid max-w-[1500px] md:grid-cols-4">
 
@@ -372,6 +500,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
           </div>
         </section>
+          )}
 
         <footer className="bg-[#111111] px-5 py-16 text-white md:px-10 md:py-20">
           <div className="mx-auto max-w-[1500px]">
