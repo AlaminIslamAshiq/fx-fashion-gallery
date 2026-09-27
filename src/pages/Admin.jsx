@@ -51,6 +51,21 @@ const [editingProductId, setEditingProductId] = useState(null);
     }
   });
 
+  const [themeSettings, setThemeSettings] = useState(() => {
+    try {
+      return {
+        primaryColor: "#111111",
+        accentColor: "#f7f7f5",
+        ...JSON.parse(localStorage.getItem("fx_theme_settings") || "{}"),
+      };
+    } catch {
+      return {
+        primaryColor: "#111111",
+        accentColor: "#f7f7f5",
+      };
+    }
+  });
+
   const [paymentSettings, setPaymentSettings] = useState(() => {
     try {
       return {
@@ -214,6 +229,17 @@ const [editingProductId, setEditingProductId] = useState(null);
       setNotice("Delivery settings saved successfully.");
     } catch (error) {
       setNotice("Could not save Delivery settings to Firebase.");
+    }
+  };
+
+  const saveThemeSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "theme"), themeSettings, { merge: true });
+      localStorage.setItem("fx_theme_settings", JSON.stringify(themeSettings));
+      window.dispatchEvent(new Event("fx-theme-updated"));
+      setNotice("Theme settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Theme settings to Firebase.");
     }
   };
 
@@ -912,6 +938,103 @@ const [editingProductId, setEditingProductId] = useState(null);
               >
                 Save Delivery Settings
               </button>
+            </div>
+          </section>
+        )}
+
+        {activeTab === "Theme & Appearance" && (
+          <section className="mt-8 space-y-6">
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Theme & Appearance</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Brand Colors</h2>
+              <p className="mt-2 text-sm text-black/50">
+                Customize the main colors used across FX Fashion Gallery.
+              </p>
+
+              <div className="mt-8 grid gap-6 md:grid-cols-2">
+                <label className="block">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/50">
+                    Primary Color
+                  </span>
+                  <div className="mt-3 flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={themeSettings.primaryColor}
+                      onChange={(e) =>
+                        setThemeSettings((current) => ({
+                          ...current,
+                          primaryColor: e.target.value,
+                        }))
+                      }
+                      className="h-12 w-16 cursor-pointer rounded-lg border border-black/10 bg-white p-1"
+                    />
+                    <input
+                      type="text"
+                      value={themeSettings.primaryColor}
+                      onChange={(e) =>
+                        setThemeSettings((current) => ({
+                          ...current,
+                          primaryColor: e.target.value,
+                        }))
+                      }
+                      className="h-12 flex-1 rounded-lg border border-black/10 px-4 text-sm outline-none focus:border-black"
+                    />
+                  </div>
+                </label>
+
+                <label className="block">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/50">
+                    Accent Color
+                  </span>
+                  <div className="mt-3 flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={themeSettings.accentColor}
+                      onChange={(e) =>
+                        setThemeSettings((current) => ({
+                          ...current,
+                          accentColor: e.target.value,
+                        }))
+                      }
+                      className="h-12 w-16 cursor-pointer rounded-lg border border-black/10 bg-white p-1"
+                    />
+                    <input
+                      type="text"
+                      value={themeSettings.accentColor}
+                      onChange={(e) =>
+                        setThemeSettings((current) => ({
+                          ...current,
+                          accentColor: e.target.value,
+                        }))
+                      }
+                      className="h-12 flex-1 rounded-lg border border-black/10 px-4 text-sm outline-none focus:border-black"
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={saveThemeSettings}
+                  className="rounded-lg bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white hover:bg-black/80"
+                >
+                  Save Theme Settings
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setThemeSettings({
+                      primaryColor: "#111111",
+                      accentColor: "#f7f7f5",
+                    })
+                  }
+                  className="rounded-lg border border-black/10 px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] hover:bg-black/5"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
           </section>
         )}
