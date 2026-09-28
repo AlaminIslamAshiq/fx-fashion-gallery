@@ -23,11 +23,57 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   });
 
   useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "seo"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+
+        if (settings.metaTitle) {
+          document.title = settings.metaTitle;
+        }
+
+        if (settings.metaDescription) {
+          let description = document.querySelector('meta[name="description"]');
+          if (!description) {
+            description = document.createElement("meta");
+            description.setAttribute("name", "description");
+            document.head.appendChild(description);
+          }
+          description.setAttribute("content", settings.metaDescription);
+        }
+
+        if (settings.keywords) {
+          let keywords = document.querySelector('meta[name="keywords"]');
+          if (!keywords) {
+            keywords = document.createElement("meta");
+            keywords.setAttribute("name", "keywords");
+            document.head.appendChild(keywords);
+          }
+          keywords.setAttribute("content", settings.keywords);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "settings", "theme"), (snapshot) => {
       if (snapshot.exists()) {
         const settings = snapshot.data();
         setSiteSettings((current) => ({ ...current, ...settings }));
         localStorage.setItem("fx_theme_settings", JSON.stringify(settings));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "store"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setSiteSettings((current) => ({ ...current, ...settings }));
+        localStorage.setItem("fx_site_settings", JSON.stringify(settings));
       }
     });
 

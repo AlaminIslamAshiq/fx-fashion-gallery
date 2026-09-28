@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase.js";
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -88,6 +88,23 @@ const [editingProductId, setEditingProductId] = useState(null);
   });
 
 
+  const [seoSettings, setSeoSettings] = useState(() => {
+    try {
+      return {
+        metaTitle: "FX Fashion Gallery | Modern Fashion",
+        metaDescription: "Shop modern fashion for Men, Women and Kids at FX Fashion Gallery.",
+        keywords: "fashion, clothing, men, women, kids, Bangladesh",
+        ...JSON.parse(localStorage.getItem("fx_seo_settings") || "{}"),
+      };
+    } catch {
+      return {
+        metaTitle: "FX Fashion Gallery | Modern Fashion",
+        metaDescription: "Shop modern fashion for Men, Women and Kids at FX Fashion Gallery.",
+        keywords: "fashion, clothing, men, women, kids, Bangladesh",
+      };
+    }
+  });
+
   const [homepageSettings, setHomepageSettings] = useState(() => {
     try {
       return {
@@ -146,6 +163,51 @@ const [editingProductId, setEditingProductId] = useState(null);
     }
   });
 
+  const [socialLinks, setSocialLinks] = useState(() => {
+    try {
+      return {
+        facebook: "",
+        instagram: "",
+        tiktok: "",
+        youtube: "",
+        whatsapp: "01897523321",
+        ...JSON.parse(localStorage.getItem("fx_social_links") || "{}"),
+      };
+    } catch {
+      return {
+        facebook: "",
+        instagram: "",
+        tiktok: "",
+        youtube: "",
+        whatsapp: "01897523321",
+      };
+    }
+  });
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "social"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setSocialLinks((current) => ({ ...current, ...settings }));
+        localStorage.setItem("fx_social_links", JSON.stringify(settings));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [loggedIn]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "seo"), (snapshot) => {
+      if (snapshot.exists()) {
+        const settings = snapshot.data();
+        setSeoSettings((current) => ({ ...current, ...settings }));
+        localStorage.setItem("fx_seo_settings", JSON.stringify(settings));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [loggedIn]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setLoggedIn(Boolean(user));
@@ -185,10 +247,35 @@ const [editingProductId, setEditingProductId] = useState(null);
     return () => unsubscribe();
   }, [loggedIn]);
 
-  const saveSiteSettings = () => {
-    localStorage.setItem("fx_site_settings", JSON.stringify(siteSettings));
-    window.dispatchEvent(new Event("fx-settings-updated"));
-    setNotice("Website settings saved successfully.");
+  const saveSiteSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "store"), siteSettings, { merge: true });
+      localStorage.setItem("fx_site_settings", JSON.stringify(siteSettings));
+      window.dispatchEvent(new Event("fx-settings-updated"));
+      setNotice("Website settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Website settings to Firebase.");
+    }
+  };
+
+  const saveSeoSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "seo"), seoSettings, { merge: true });
+      localStorage.setItem("fx_seo_settings", JSON.stringify(seoSettings));
+      setNotice("SEO settings saved successfully.");
+    } catch (error) {
+      setNotice("Could not save SEO settings to Firebase.");
+    }
+  };
+
+  const saveSocialLinks = async () => {
+    try {
+      await setDoc(doc(db, "settings", "social"), socialLinks, { merge: true });
+      localStorage.setItem("fx_social_links", JSON.stringify(socialLinks));
+      setNotice("Social links saved successfully.");
+    } catch (error) {
+      setNotice("Could not save Social Links to Firebase.");
+    }
   };
 
   const saveHomepageSettings = async () => {
@@ -1039,7 +1126,100 @@ const [editingProductId, setEditingProductId] = useState(null);
           </section>
         )}
 
-        {activeTab === "Payment" && (
+        {activeTab === "Social Links" && (<section className="mt-8 space-y-6"><div className="border border-black/10 bg-white p-6 md:p-8"><p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Social Presence</p><h2 className="mt-2 text-xl font-semibold tracking-tight">Social Links</h2><p className="mt-2 text-sm text-black/50">Add your official social media and WhatsApp links.</p><div className="mt-8 grid gap-4 md:grid-cols-2"><input value={socialLinks.facebook} onChange={(e)=>setSocialLinks({...socialLinks,facebook:e.target.value})} placeholder="Facebook URL" className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"/><input value={socialLinks.instagram} onChange={(e)=>setSocialLinks({...socialLinks,instagram:e.target.value})} placeholder="Instagram URL" className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"/><input value={socialLinks.tiktok} onChange={(e)=>setSocialLinks({...socialLinks,tiktok:e.target.value})} placeholder="TikTok URL" className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"/><input value={socialLinks.youtube} onChange={(e)=>setSocialLinks({...socialLinks,youtube:e.target.value})} placeholder="YouTube URL" className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"/><input value={socialLinks.whatsapp} onChange={(e)=>setSocialLinks({...socialLinks,whatsapp:e.target.value})} placeholder="WhatsApp Number" className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black md:col-span-2"/></div><div className="mt-6 flex justify-end"><button onClick={saveSocialLinks} className="bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white">Save Social Links</button></div></div></section>)}
+
+{activeTab === "SEO" && (
+  <section className="mt-8 space-y-6">
+    <div className="border border-black/10 bg-white p-6 md:p-8">
+      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Search Visibility</p>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">SEO Settings</h2>
+      <p className="mt-2 text-sm text-black/50">Control the main title and description used by search engines.</p>
+
+      <div className="mt-8 space-y-4">
+        <input
+          value={seoSettings.metaTitle}
+          onChange={(e) => setSeoSettings({ ...seoSettings, metaTitle: e.target.value })}
+          placeholder="Meta Title"
+          className="w-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+        />
+
+        <textarea
+          value={seoSettings.metaDescription}
+          onChange={(e) => setSeoSettings({ ...seoSettings, metaDescription: e.target.value })}
+          placeholder="Meta Description"
+          rows="4"
+          className="w-full resize-none border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+        />
+
+        <input
+          value={seoSettings.keywords}
+          onChange={(e) => setSeoSettings({ ...seoSettings, keywords: e.target.value })}
+          placeholder="Keywords separated by commas"
+          className="w-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+        />
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <button
+          onClick={saveSeoSettings}
+          className="bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white hover:bg-black/80"
+        >
+          Save SEO Settings
+        </button>
+      </div>
+    </div>
+  </section>
+)}
+
+{activeTab === "Admin & Security" && (
+  <section className="mt-8 space-y-6">
+    <div className="border border-black/10 bg-white p-6 md:p-8">
+      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Security Center</p>
+      <h2 className="mt-2 text-xl font-semibold tracking-tight">Admin & Security</h2>
+      <p className="mt-2 text-sm text-black/50">Your admin access is protected by Firebase Authentication.</p>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="border border-black/10 p-5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">Authentication</p>
+          <p className="mt-2 text-sm font-semibold text-emerald-700">Firebase Authentication Active</p>
+          <p className="mt-2 text-xs leading-5 text-black/50">Only authenticated admin users can access protected dashboard operations.</p>
+        </div>
+
+        <div className="border border-black/10 p-5">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">Current Admin</p>
+          <p className="mt-2 break-all text-sm font-semibold">{auth.currentUser?.email || "Authenticated Admin"}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 border border-black/10 p-5">
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">Password Security</p>
+        <p className="mt-2 text-sm text-black/60">Send a secure password-reset email to the current admin account.</p>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const currentEmail = auth.currentUser?.email;
+              if (!currentEmail) {
+                setNotice("No authenticated admin email was found.");
+                return;
+              }
+              await sendPasswordResetEmail(auth, currentEmail);
+              setNotice("Password reset email sent successfully.");
+            } catch (error) {
+              setNotice("Could not send password reset email.");
+            }
+          }}
+          className="mt-4 bg-black px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white hover:bg-black/80"
+        >
+          Send Password Reset Email
+        </button>
+      </div>
+    </div>
+  </section>
+)}
+
+{activeTab === "Payment" && (
           <section className="mt-8 space-y-6">
             <div className="border border-black/10 bg-white p-6 md:p-8">
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">Payment Settings</p>
@@ -1206,7 +1386,7 @@ const [editingProductId, setEditingProductId] = useState(null);
           </section>
         )}
 
-        {activeTab === "Settings" && (
+        {activeTab === "Store Settings" && (
           <section className="mt-8 space-y-6">
 
             <div className="border border-black/10 bg-white p-6 md:p-8">
