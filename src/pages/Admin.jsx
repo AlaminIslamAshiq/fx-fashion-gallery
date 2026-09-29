@@ -34,6 +34,7 @@ export default function Admin() {
 const [editingProductId, setEditingProductId] = useState(null);
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
+  const [orderSearch, setOrderSearch] = useState("");
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deliverySettings, setDeliverySettings] = useState(() => {
@@ -817,14 +818,29 @@ const [editingProductId, setEditingProductId] = useState(null);
 
         {activeTab === "Orders" && <section className="mt-8 border border-black/10 bg-white">
           <div className="border-b border-black/10 p-6">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Recent Orders</h2>
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Order Management</h2>
+                <p className="mt-2 text-xs text-black/45">Search orders securely by Order ID.</p>
+              </div>
+              <div className="w-full md:w-80">
+                <label className="mb-2 block text-[9px] font-bold uppercase tracking-[0.16em] text-black/40">Search Order ID</label>
+                <input
+                  type="text"
+                  value={orderSearch}
+                  onChange={(event) => setOrderSearch(event.target.value)}
+                  placeholder="e.g. FX-60140082"
+                  className="w-full border border-black/15 bg-[#fafaf8] px-4 py-3 text-sm outline-none transition focus:border-black focus:bg-white"
+                />
+              </div>
+            </div>
           </div>
 
           {orders.length === 0 ? (
             <p className="p-8 text-sm text-black/50">No orders yet.</p>
           ) : (
             <div className="divide-y divide-black/10">
-              {orders.map((order) => {
+              {orders.filter((order) => order.id?.toLowerCase().includes(orderSearch.trim().toLowerCase())).map((order) => {
                 const deliveryCharge = Number(order.deliveryCharge ?? 0);
                 const total = Number(order.total ?? (Number(order.subtotal || 0) + deliveryCharge));
 
