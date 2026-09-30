@@ -185,7 +185,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           {homepageSettings.showHero !== false && (
             <section className="relative min-h-[680px] overflow-hidden bg-[#111111] md:min-h-[780px]">
               <img
-                src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=2200&q=90"
+                src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=2200&q=90"
                 alt="FX Fashion Gallery collection"
                 className="absolute inset-0 h-full w-full object-cover"
               />
