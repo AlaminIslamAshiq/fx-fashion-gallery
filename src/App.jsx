@@ -673,13 +673,13 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
           {products.length > 0 && (
             <section className="border-t border-black/10 bg-[#f7f7f5]">
-              <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
+              <div className="mx-auto max-w-[1600px] px-5 py-20 md:px-10 md:py-28">
                 <div className="mb-12 flex items-end justify-between">
                   <div>
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
-                      The full collection
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-black/40">
+                      Explore the collection
                     </p>
-                    <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
+                    <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-6xl">
                       All Products
                     </h2>
                   </div>
@@ -692,8 +692,8 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-5">
-                  {products.slice(0, 12).map((product) => {
+                <div className="grid grid-cols-2 gap-x-3 gap-y-12 sm:gap-x-5 md:grid-cols-3 md:gap-y-14 lg:grid-cols-4">
+                  {products.map((product) => {
                     const basePrice =
                       Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
                     const discountValue = Number(product.discountValue || 0);
@@ -710,7 +710,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                         to={"/product/" + product.id}
                         className="group block"
                       >
-                        <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5]">
                           {product.imageData ? (
                             <img
                               src={product.imageData}
