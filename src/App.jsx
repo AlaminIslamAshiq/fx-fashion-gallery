@@ -7,6 +7,7 @@ import ProductDetails from './pages/ProductDetails.jsx'
 import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
+import Account from './pages/Account.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { collection, doc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase.js'
@@ -212,7 +213,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
               </button>
 
               {[
-                ["👤", "My Account / Login", "#"],
+                ["👤", "My Account / Login", "/account"],
                 ["🛍️", "Shop All", "/shop"],
                 ["👔", "Men", "/shop"],
                 ["👗", "Women", "/shop"],
@@ -757,6 +758,7 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/account" element={<Account />} />
         </Routes>
       </BrowserRouter>
     </CartProvider>
