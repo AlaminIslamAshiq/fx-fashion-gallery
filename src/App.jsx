@@ -113,6 +113,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
     };
   }, []);
   const [searchOpen, setSearchOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [addedProduct, setAddedProduct] = useState("")
   const { cartCount, addToCart } = useCart()
   return (
@@ -125,8 +126,8 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
       <header className="border-b border-black/10 bg-[#f7f7f5]">
         <div className="mx-auto flex h-[82px] max-w-[1500px] items-center justify-between px-5 md:px-10">
 
-          <button className="lg:hidden">
-            <Menu size={22} strokeWidth={1.5} />
+          <button onClick={() => setMenuOpen(true)} className="lg:hidden" aria-label="Open menu">
+            <Menu size={24} strokeWidth={1.5} />
           </button>
 
           <Link to="/" className="flex items-center gap-3">
@@ -179,6 +180,78 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-[100] lg:hidden">
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="absolute inset-0 bg-black/45"
+            aria-label="Close menu"
+          />
+
+          <aside className="absolute left-0 top-0 flex h-full w-[88%] max-w-[390px] flex-col bg-[#f7f7f5] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-black/10 px-6 py-6">
+              <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-3">
+                <img src="/fx-logo.png" alt="FX" className="h-9 w-auto" />
+                <div>
+                  <div className="text-[16px] font-black tracking-[-0.04em]">FX FASHION</div>
+                  <div className="mt-1 text-[7px] tracking-[0.4em] text-black/45">GALLERY</div>
+                </div>
+              </Link>
+              <button onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                <X size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-6 py-5">
+              <button
+                onClick={() => { setMenuOpen(false); setSearchOpen(true); }}
+                className="flex w-full items-center gap-4 border-b border-black/10 py-4 text-left text-[12px] font-bold uppercase tracking-[0.12em]"
+              >
+                🔍 <span>Search</span>
+              </button>
+
+              {[
+                ["👤", "My Account / Login", "#"],
+                ["🛍️", "Shop All", "/shop"],
+                ["👔", "Men", "/shop"],
+                ["👗", "Women", "/shop"],
+                ["🧒", "Kids", "/shop"],
+                ["✨", "New Arrivals", "/shop"],
+                ["🔥", "Sale", "/shop"],
+                ["❤️", "Wishlist", "#"],
+                ["🛒", "Cart", "/cart"],
+                ["📦", "Track Order", "#"],
+                ["📞", "Contact Us", "#"],
+              ].map(([icon, label, href]) => (
+                <Link
+                  key={label}
+                  to={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-4 border-b border-black/10 py-4 text-[12px] font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-45"
+                >
+                  <span className="text-base">{icon}</span>
+                  <span>{label}</span>
+                </Link>
+              ))}
+
+              <div className="mt-6 border-t border-black/10 pt-5">
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-4 py-4 text-[12px] font-black uppercase tracking-[0.12em]"
+                >
+                  ⚙️ <span>Admin Login</span>
+                </Link>
+              </div>
+            </nav>
+
+            <div className="border-t border-black/10 px-6 py-5 text-[9px] uppercase tracking-[0.2em] text-black/45">
+              FX Fashion Gallery · Modern Fashion
+            </div>
+          </aside>
+        </div>
+      )}
 
       <main>
 
