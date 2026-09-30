@@ -114,6 +114,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
     };
   }, []);
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
   const [addedProduct, setAddedProduct] = useState("")
   const { cartCount, addToCart } = useCart()
@@ -157,7 +158,64 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
           {searchOpen && (
             <div className="absolute left-0 right-0 top-full z-50 border-t border-black/10 bg-white px-5 py-4 shadow-lg">
-              <input autoFocus type="text" placeholder="Search products..." className="w-full border-b border-black/20 bg-transparent py-3 text-sm outline-none placeholder:text-black/40" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="w-full border-b border-black/20 bg-transparent py-3 text-sm outline-none placeholder:text-black/40"
+              />
+
+              {searchQuery.trim() && (
+                <div className="mt-3 max-h-80 overflow-y-auto">
+                  {products
+                    .filter((product) => {
+                      const q = searchQuery.trim().toLowerCase();
+                      return (
+                        String(product.name || "").toLowerCase().includes(q) ||
+                        String(product.category || "").toLowerCase().includes(q) ||
+                        String(product.description || "").toLowerCase().includes(q)
+                      );
+                    })
+                    .slice(0, 8)
+                    .map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/product/${product.id}`}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex items-center gap-4 border-b border-black/10 px-2 py-3 transition hover:bg-black/[0.03]"
+                      >
+                        {product.imageData ? (
+                          <img src={product.imageData} alt={product.name} className="h-14 w-12 object-cover" />
+                        ) : (
+                          <div className="h-14 w-12 bg-black/5" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">{product.name}</div>
+                          <div className="mt-1 text-[10px] uppercase tracking-[0.15em] text-black/40">{product.category}</div>
+                          <div className="mt-1 text-xs font-medium">{siteSettings.currency}{product.price}</div>
+                        </div>
+                      </Link>
+                    ))}
+
+                  {products.filter((product) => {
+                    const q = searchQuery.trim().toLowerCase();
+                    return (
+                      String(product.name || "").toLowerCase().includes(q) ||
+                      String(product.category || "").toLowerCase().includes(q) ||
+                      String(product.description || "").toLowerCase().includes(q)
+                    );
+                  }).length === 0 && (
+                    <div className="px-2 py-5 text-center text-xs text-black/45">
+                      No products found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
