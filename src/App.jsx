@@ -129,14 +129,17 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
             <Menu size={22} strokeWidth={1.5} />
           </button>
 
-          <div className="leading-none">
-            <div className="text-[21px] font-black tracking-[-0.065em] md:text-[25px]">
-              FX FASHION
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/fx-logo.png" alt="FX Fashion Gallery" className="h-11 w-auto object-contain md:h-12" />
+            <div className="hidden leading-none sm:block">
+              <div className="text-[18px] font-black tracking-[-0.05em] md:text-[20px]">
+                FX FASHION
+              </div>
+              <div className="mt-1 text-[7px] font-medium tracking-[0.45em] text-black/50">
+                GALLERY
+              </div>
             </div>
-            <div className="mt-1 text-[8px] font-medium tracking-[0.52em] text-black/50">
-              GALLERY
-            </div>
-          </div>
+          </Link>
 
           <nav className="hidden items-center gap-9 lg:flex">
             {['Home', 'Men', 'Women', 'Kids', 'New Arrivals', 'Sale'].map((item) => (
@@ -180,44 +183,71 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
       <main>
 
           {homepageSettings.showHero !== false && (
-        <section className="relative min-h-[650px] overflow-hidden bg-[#d9d5ce] md:min-h-[760px]">
-          <img
-            src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=2200&q=90"
-            alt="FX Fashion Gallery collection"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+            <section className="relative min-h-[680px] overflow-hidden bg-[#111111] md:min-h-[780px]">
+              <img
+                src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=2200&q=90"
+                alt="FX Fashion Gallery collection"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/45" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
 
-          <div className="absolute inset-0 bg-black/30" />
+              <div className="relative mx-auto flex min-h-[680px] max-w-[1500px] flex-col items-center justify-center px-5 text-center text-white md:min-h-[780px]">
+                <img
+                  src="/fx-logo.png"
+                  alt="FX"
+                  className="mb-8 h-16 w-auto brightness-0 invert md:h-20"
+                />
 
-          <div className="relative mx-auto flex min-h-[650px] max-w-[1500px] items-end px-6 pb-14 md:min-h-[760px] md:px-10 md:pb-20 lg:px-14">
+                <p className="mb-5 text-[9px] font-semibold uppercase tracking-[0.42em] text-white/75 md:text-[10px]">
+                  FX Fashion Gallery · New Collection
+                </p>
 
-            <div className="max-w-[720px] text-white">
+                <h1 className="max-w-[1000px] text-5xl font-black uppercase leading-[0.88] tracking-[-0.07em] sm:text-7xl md:text-8xl lg:text-[108px]">
+                  {homepageSettings.heroTitle}
+                </h1>
 
-              <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.35em] md:text-[11px]">
-                The New Season · 2026
-              </p>
+                <p className="mt-7 max-w-[560px] text-sm leading-6 text-white/80 md:text-[15px]">
+                  {homepageSettings.heroSubtitle}
+                </p>
 
-              <h1 className="text-[56px] font-black uppercase leading-[0.86] tracking-[-0.065em] sm:text-7xl md:text-8xl lg:text-[110px]">
-                {homepageSettings.heroTitle}
-              </h1>
+                <div className="mt-8 flex w-full max-w-[600px] items-center border border-white/35 bg-white/10 px-5 py-1 backdrop-blur-md">
+                  <Search size={18} strokeWidth={1.5} className="shrink-0 text-white/70" />
+                  <input
+                    type="text"
+                    placeholder="What are you looking for?"
+                    className="w-full bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/55"
+                  />
+                  <a
+                    href="/shop"
+                    className="shrink-0 bg-white px-5 py-3 text-[9px] font-bold uppercase tracking-[0.18em] text-black transition hover:bg-white/80"
+                  >
+                    Search
+                  </a>
+                </div>
 
-              <p className="mt-7 max-w-[440px] text-sm leading-6 text-white/85 md:text-[15px]">
-                {homepageSettings.heroSubtitle}
-              </p>
+                <div className="mt-7 flex flex-wrap justify-center gap-3">
+                  {["Men", "Women", "Kids", "New Arrivals", "Sale"].map((item) => (
+                    <a
+                      key={item}
+                      href="/shop"
+                      className="border border-white/30 px-5 py-2.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+                    >
+                      {item}
+                    </a>
+                  ))}
+                </div>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a href={homepageSettings.heroButtonLink || "/shop"} className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white">
-                  {homepageSettings.heroButtonText || "Shop Collection"}
-                </a>
-
-                <button className="border border-white/70 px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:bg-white hover:text-black">
-                  New Arrivals
-                </button>
+                <div className="mt-9 flex flex-wrap justify-center gap-3">
+                  <a
+                    href={homepageSettings.heroButtonLink || "/shop"}
+                    className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white"
+                  >
+                    {homepageSettings.heroButtonText || "Shop Collection"}
+                  </a>
+                </div>
               </div>
-
-            </div>
-          </div>
-        </section>
+            </section>
           )}
 
         {homepageSettings.showCategories !== false && (
