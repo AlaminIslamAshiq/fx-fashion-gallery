@@ -303,13 +303,6 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
               ))}
 
               <div className="mt-6 border-t border-black/10 pt-5">
-                <Link
-                  to="/admin"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-4 py-4 text-[12px] font-black uppercase tracking-[0.12em]"
-                >
-                  ⚙️ <span>Admin Login</span>
-                </Link>
               </div>
             </nav>
 
@@ -710,31 +703,61 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                         to={"/product/" + product.id}
                         className="group block"
                       >
-                        <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5]">
+                        <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5] shadow-sm transition duration-500 group-hover:-translate-y-1 group-hover:shadow-xl">
                           {product.imageData ? (
                             <img
                               src={product.imageData}
                               alt={product.name || "Product"}
-                              className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
                               FX Fashion Gallery
                             </div>
                           )}
+
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+
+                          <div className="absolute left-3 top-3 flex flex-col gap-2">
+                            {product.newArrival === true && (
+                              <span className="bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-black shadow-sm">
+                                New
+                              </span>
+                            )}
+
+                            {product.discountEnabled && discountValue > 0 && (
+                              <span className="bg-black px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
+                                Sale
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="absolute bottom-3 left-3 right-3 translate-y-3 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                            <span className="block rounded-full bg-white/95 px-4 py-3 text-center text-[9px] font-bold uppercase tracking-[0.2em] text-black backdrop-blur-sm">
+                              View Product
+                            </span>
+                          </div>
                         </div>
 
                         <div className="pt-4">
-                          <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
-                            {product.category || "Fashion"}
-                          </p>
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
+                              {product.category || "Fashion"}
+                            </p>
 
-                          <h3 className="mt-1 text-sm font-semibold">
+                            {Number(product.rating || 0) > 0 && (
+                              <span className="text-[9px] font-semibold tracking-[0.08em] text-black/45">
+                                ★ {Number(product.rating).toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 md:text-[15px]">
                             {product.name || "Untitled Product"}
                           </h3>
 
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="text-sm font-bold">
+                          <div className="mt-2.5 flex items-baseline gap-2">
+                            <span className="text-[15px] font-bold tracking-tight">
                               ৳{salePrice.toLocaleString()}
                             </span>
 
