@@ -8,7 +8,6 @@ import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
 import Account from './pages/Account.jsx'
-import Info from './pages/Info.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { collection, doc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase.js'
@@ -552,205 +551,111 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           </section>
           )}
           {homepageSettings.showNewArrivals !== false && (
-            <section className="border-t border-black/10 bg-white">
-              <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
-                <div className="mb-12 flex items-end justify-between">
-                  <div>
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
-                      Freshly selected
-                    </p>
-                    <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
-                      New Arrivals
-                    </h2>
-                  </div>
+        <section className="border-t border-black/10 bg-white">
+          <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
 
-                  <Link
-                    to="/shop?filter=new"
-                    className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block"
-                  >
-                    View All
-                  </Link>
-                </div>
-
-                {products.filter((product) => product.newArrival === true).length === 0 ? (
-                  <div className="border border-black/10 px-6 py-16 text-center">
-                    <p className="text-sm font-semibold">New arrivals coming soon.</p>
-                    <p className="mt-2 text-xs text-black/50">
-                      Mark products as New Arrival from the Admin panel.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-5">
-                    {products
-                      .filter((product) => product.newArrival === true)
-                      .slice(0, 8)
-                      .map((product) => {
-                        const basePrice =
-                          Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
-                        const discountValue = Number(product.discountValue || 0);
-                        const salePrice =
-                          product.discountEnabled && discountValue > 0
-                            ? product.discountType === "percentage"
-                              ? Math.max(0, basePrice - (basePrice * discountValue / 100))
-                              : Math.max(0, basePrice - discountValue)
-                            : basePrice;
-
-                        return (
-                          <article key={product.id} className="group">
-                            <Link to={"/product/" + product.id} className="block">
-                              <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
-                                {product.imageData ? (
-                                  <img
-                                    src={product.imageData}
-                                    alt={product.name || "Product"}
-                                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                                  />
-                                ) : (
-                                  <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
-                                    FX Fashion Gallery
-                                  </div>
-                                )}
-
-                                <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em]">
-                                  New
-                                </span>
-
-                                {product.discountEnabled && discountValue > 0 && (
-                                  <span className="absolute right-3 top-3 bg-black px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-white">
-                                    Sale
-                                  </span>
-                                )}
-                              </div>
-                            </Link>
-
-                            <div className="pt-4">
-                              <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
-                                {product.category || "Fashion"}
-                              </p>
-
-                              <h3 className="mt-1 text-sm font-semibold leading-5 md:text-[15px]">
-                                {product.name || "Untitled Product"}
-                              </h3>
-
-                              <div className="mt-2 flex items-center gap-2">
-                                <span className="text-sm font-bold">
-                                  ৳{salePrice.toLocaleString()}
-                                </span>
-
-                                {salePrice < basePrice && (
-                                  <span className="text-xs text-black/35 line-through">
-                                    ৳{basePrice.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  addToCart(
-                                    product,
-                                    Array.isArray(product.sizes) && product.sizes.length > 0
-                                      ? product.sizes[0]
-                                      : "M",
-                                    1
-                                  );
-                                  setAddedProduct(product.name);
-                                  setTimeout(() => setAddedProduct(""), 1800);
-                                }}
-                                className="mt-4 w-full rounded-full bg-black py-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
-                              >
-                                {addedProduct === product.name ? "Added to Cart ✓" : "Add to Cart"}
-                              </button>
-                            </div>
-                          </article>
-                        );
-                      })}
-                  </div>
-                )}
+            <div className="mb-12 flex items-end justify-between">
+              <div>
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
+                  Freshly selected
+                </p>
+                <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
+                  New Arrivals
+                </h2>
               </div>
-            </section>
-          )}
 
-          {products.length > 0 && (
-            <section className="border-t border-black/10 bg-[#f7f7f5]">
-              <div className="mx-auto max-w-[1500px] px-5 py-20 md:px-10 md:py-28">
-                <div className="mb-12 flex items-end justify-between">
-                  <div>
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-black/40">
-                      The full collection
-                    </p>
-                    <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-5xl">
-                      All Products
-                    </h2>
+              <Link to="/shop?filter=new" className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block">
+                View All
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-5">
+
+              {[
+                {
+                  name: 'Essential Oversized Shirt',
+                  category: 'Men',
+                  price: '৳1,890',
+                  oldPrice: '৳2,290',
+                  image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Minimal Everyday Dress',
+                  category: 'Women',
+                  price: '৳2,490',
+                  oldPrice: '৳2,990',
+                  image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Classic Street Jacket',
+                  category: 'Men',
+                  price: '৳2,790',
+                  oldPrice: '৳3,290',
+                  image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=900&q=90',
+                },
+                {
+                  name: 'Modern Casual Look',
+                  category: 'Women',
+                  price: '৳2,190',
+                  oldPrice: '৳2,590',
+                  image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=900&q=90',
+                },
+              ].map((product) => (
+                <article key={product.name} className="group">
+
+                  <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
+
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                    />
+
+                    <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em]">
+                      New
+                    </span>
+
+                    <button className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white">
+                      <Heart size={15} strokeWidth={1.5} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addToCart(product, "M", 1)
+                        setAddedProduct(product.name)
+                        setTimeout(() => setAddedProduct(""), 1800)
+                      }}
+                      className="mt-3 w-full rounded-full bg-black py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+                    >
+                      {addedProduct === product.name ? "Added to Cart ✓" : "Add to Cart"}
+                    </button>
+
                   </div>
 
-                  <Link
-                    to="/shop"
-                    className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block"
-                  >
-                    Shop All
-                  </Link>
-                </div>
+                  <div className="pt-4">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
+                      {product.category}
+                    </p>
 
-                <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-5">
-                  {products.slice(0, 12).map((product) => {
-                    const basePrice =
-                      Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
-                    const discountValue = Number(product.discountValue || 0);
-                    const salePrice =
-                      product.discountEnabled && discountValue > 0
-                        ? product.discountType === "percentage"
-                          ? Math.max(0, basePrice - (basePrice * discountValue / 100))
-                          : Math.max(0, basePrice - discountValue)
-                        : basePrice;
+                    <h3 className="mt-1 text-sm font-semibold leading-5 md:text-[15px]">
+                      {product.name}
+                    </h3>
 
-                    return (
-                      <Link
-                        key={product.id}
-                        to={"/product/" + product.id}
-                        className="group block"
-                      >
-                        <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
-                          {product.imageData ? (
-                            <img
-                              src={product.imageData}
-                              alt={product.name || "Product"}
-                              className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
-                              FX Fashion Gallery
-                            </div>
-                          )}
-                        </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-sm font-bold">{product.price}</span>
+                      <span className="text-xs text-black/35 line-through">
+                        {product.oldPrice}
+                      </span>
+                    </div>
+                  </div>
 
-                        <div className="pt-4">
-                          <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
-                            {product.category || "Fashion"}
-                          </p>
+                </article>
+              ))}
 
-                          <h3 className="mt-1 text-sm font-semibold">
-                            {product.name || "Untitled Product"}
-                          </h3>
-
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="text-sm font-bold">
-                              ৳{salePrice.toLocaleString()}
-                            </span>
-
-                            {salePrice < basePrice && (
-                              <span className="text-xs text-black/35 line-through">
-                                ৳{basePrice.toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
+            </div>
+          </div>
+        </section>
           )}
 
 
@@ -864,11 +769,11 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                 </h3>
 
                 <div className="mt-5 space-y-3 text-xs text-white/70">
-                  <Link to="/info/contact" className="block hover:text-white">Contact Us</Link>
-                  <Link to="/info/delivery" className="block hover:text-white">Delivery Information</Link>
-                  <Link to="/info/returns" className="block hover:text-white">Returns & Exchange</Link>
+                  <a href="#" className="block hover:text-white">Contact Us</a>
+                  <a href="#" className="block hover:text-white">Delivery Information</a>
+                  <a href="#" className="block hover:text-white">Returns & Exchange</a>
                   <a href="#" className="block hover:text-white">Track Order</a>
-                  <Link to="/info/privacy" className="block hover:text-white">Privacy Policy</Link>
+                  <a href="#" className="block hover:text-white">Privacy Policy</a>
                 </div>
               </div>
 
@@ -919,7 +824,6 @@ export default function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/account" element={<Account />} />
-          <Route path="/info/:page" element={<Info />} />
         </Routes>
       </BrowserRouter>
     </CartProvider>

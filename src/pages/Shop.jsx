@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.js";
@@ -13,6 +13,7 @@ const defaultProducts = [
 
 export default function Shop() {
   const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
   const [customProducts, setCustomProducts] = useState([]);
 
   useEffect(() => {
@@ -24,7 +25,22 @@ export default function Shop() {
   }, []);
 
   const products = [...defaultProducts, ...customProducts];
-  const [activeFilter, setActiveFilter] = useState("All Products");
+
+  const getInitialFilter = () => {
+    const category = searchParams.get("category");
+    const filter = searchParams.get("filter");
+
+    if (["Men", "Women", "Kids"].includes(category)) return category;
+    if (filter === "new") return "New Arrivals";
+    if (filter === "sale") return "Sale";
+    return "All Products";
+  };
+
+  const [activeFilter, setActiveFilter] = useState(getInitialFilter);
+
+  useEffect(() => {
+    setActiveFilter(getInitialFilter());
+  }, [searchParams]);
 
   const getSalePrice = (product) => {
     const basePrice = Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
@@ -58,7 +74,7 @@ export default function Shop() {
         </div>
         <section className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 md:grid-cols-4 md:gap-x-6">
           {filteredProducts.map((product) => (
-            <Link key={product.name} to={`/product/${products.indexOf(product)}`} className="group block">
+            <Link key={product.id || product.name} to={`/product/${product.id || `default-${products.indexOf(product)}`}`} className="group block">
               <div className="relative aspect-[3/4] overflow-hidden bg-[#e9e9e5]">
                 <img src={product.imageData || `https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=800&q=85`} alt={product.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
                 <span className="absolute left-3 top-3 bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.15em]">New</span>
