@@ -9,6 +9,7 @@ import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
 import Account from './pages/Account.jsx'
 import Info from './pages/Info.jsx'
+import TrackOrder from './pages/TrackOrder.jsx'
 import Wishlist from './pages/Wishlist.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { WishlistProvider } from './context/WishlistContext.jsx'
@@ -290,7 +291,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                 ["🔥", "Sale", "/shop?filter=sale"],
                 ["❤️", "Wishlist", "/wishlist"],
                 ["🛒", "Cart", "/cart"],
-                ["📦", "Track Order", "#"],
+                ["📦", "Track Order", "/track-order"],
                 ["📞", "Contact Us", "#"],
               ].map(([icon, label, href]) => (
                 <Link
@@ -892,7 +893,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                   <Link to="/info/contact" className="block hover:text-white">Contact Us</Link>
                   <Link to="/info/delivery" className="block hover:text-white">Delivery Information</Link>
                   <Link to="/info/returns" className="block hover:text-white">Returns & Exchange</Link>
-                  <a href="#" className="block hover:text-white">Track Order</a>
+                  <Link to="/track-order" className="block hover:text-white">Track Order</Link>
                   <Link to="/info/privacy" className="block hover:text-white">Privacy Policy</Link>
                 </div>
               </div>
@@ -946,6 +947,7 @@ export default function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/account" element={<Account />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/info/:page" element={<Info />} />
         </Routes>
         </BrowserRouter>

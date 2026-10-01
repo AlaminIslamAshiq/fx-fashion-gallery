@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
-import { collection, addDoc, doc, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase.js";
 
 export default function Checkout() {
@@ -87,6 +87,13 @@ export default function Checkout() {
     const order = { id: newOrderId, customer, items: checkoutItems, subtotal, deliveryCharge, total, paymentMethod, transactionId: paymentMethod === "Cash on Delivery" ? "" : transactionId.trim(), paymentStatus: paymentMethod === "Cash on Delivery" ? "Not Required" : "Pending", status: "Pending", createdAt: new Date().toISOString() };
     try {
       await addDoc(collection(db, "orders"), order);
+      await setDoc(doc(db, "orderTracking", newOrderId), {
+        id: newOrderId,
+        status: "Pending",
+        paymentStatus: order.paymentStatus,
+        createdAt: order.createdAt,
+        updatedAt: order.createdAt,
+      });
     } catch (error) {
       setValidationMessage("Could not place the order. Please try again.");
       return;

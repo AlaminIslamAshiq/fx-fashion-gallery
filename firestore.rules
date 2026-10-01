@@ -71,6 +71,29 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /orderTracking/{orderId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        "id", "status", "paymentStatus", "createdAt", "updatedAt"
+      ])
+      && request.resource.data.id is string
+      && request.resource.data.id == orderId
+      && request.resource.data.status is string
+      && request.resource.data.status in [
+        "Pending", "Confirmed", "Processing", "Shipped",
+        "Delivered", "Cancelled", "Returned"
+      ]
+      && request.resource.data.paymentStatus is string
+      && request.resource.data.paymentStatus in [
+        "Not Required", "Pending", "Paid", "Failed"
+      ]
+      && request.resource.data.createdAt is string
+      && request.resource.data.updatedAt is string;
+
+      allow read: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /customers/{customerId} {
       allow read, write: if isAdmin();
     }

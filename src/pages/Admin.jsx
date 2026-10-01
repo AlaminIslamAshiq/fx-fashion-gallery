@@ -344,6 +344,18 @@ const [editingProductId, setEditingProductId] = useState(null);
   const updateStatus = async (id, status) => {
     try {
       await updateDoc(doc(db, "orders", id), { status });
+
+      const order = orders.find((item) => item.firestoreId === id);
+
+      if (order?.id) {
+        await setDoc(doc(db, "orderTracking", order.id), {
+          id: order.id,
+          status,
+          paymentStatus: order.paymentStatus || "Pending",
+          createdAt: order.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
     } catch (error) {
       setNotice("Firebase error: " + (error.code || error.message || "Unknown error"));
     }
@@ -352,6 +364,18 @@ const [editingProductId, setEditingProductId] = useState(null);
   const updatePaymentStatus = async (id, paymentStatus) => {
     try {
       await updateDoc(doc(db, "orders", id), { paymentStatus });
+
+      const order = orders.find((item) => item.firestoreId === id);
+
+      if (order?.id) {
+        await setDoc(doc(db, "orderTracking", order.id), {
+          id: order.id,
+          status: order.status || "Pending",
+          paymentStatus,
+          createdAt: order.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
     } catch (error) {
       setNotice("Could not update payment status.");
     }
