@@ -24,7 +24,10 @@ export default function ProductDetails() {
   }, []);
 
   const products = [...defaultProducts, ...customProducts];
-  const product = products[Number(id)] || products[0];
+  const defaultIndex = id && id.startsWith("default-") ? Number(id.replace("default-", "")) : -1;
+  const product = customProducts.find((item) => item.id === id)
+    || (defaultIndex >= 0 ? defaultProducts[defaultIndex] : null)
+    || products[0];
 
   const basePrice = Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
   const discountValue = Number(product.discountValue || 0);
