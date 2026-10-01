@@ -668,113 +668,165 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           )}
 
           {products.length > 0 && (
-            <section className="border-t border-black/10 bg-[#f7f7f5]">
+            <section id="collections" className="border-t border-black/10 bg-[#f7f7f5]">
               <div className="mx-auto max-w-[1600px] px-5 py-20 md:px-10 md:py-28">
-                <div className="mb-12 flex items-end justify-between">
-                  <div>
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-black/40">
-                      Explore the collection
-                    </p>
-                    <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-6xl">
-                      All Products
-                    </h2>
-                  </div>
+                {["Men", "Women", "Kids"].map((category, categoryIndex) => {
+                  const categoryProducts = products
+                    .filter(
+                      (product) =>
+                        String(product.category || "").trim().toLowerCase() ===
+                        category.toLowerCase()
+                    )
+                    .slice(0, 8);
 
-                  <Link
-                    to="/shop"
-                    className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block"
-                  >
-                    Shop All
-                  </Link>
-                </div>
+                  const sectionId = category.toLowerCase();
 
-                <div className="grid grid-cols-2 gap-x-3 gap-y-12 sm:gap-x-5 md:grid-cols-3 md:gap-y-14 lg:grid-cols-4">
-                  {products.map((product) => {
-                    const basePrice =
-                      Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
-                    const discountValue = Number(product.discountValue || 0);
-                    const salePrice =
-                      product.discountEnabled && discountValue > 0
-                        ? product.discountType === "percentage"
-                          ? Math.max(0, basePrice - (basePrice * discountValue / 100))
-                          : Math.max(0, basePrice - discountValue)
-                        : basePrice;
-
-                    return (
-                      <Link
-                        key={product.id}
-                        to={"/product/" + product.id}
-                        className="group block"
-                      >
-                        <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5] shadow-sm transition duration-500 group-hover:-translate-y-1 group-hover:shadow-xl">
-                          {product.imageData ? (
-                            <img
-                              src={product.imageData}
-                              alt={product.name || "Product"}
-                              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
-                              FX Fashion Gallery
-                            </div>
-                          )}
-
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
-
-                          <div className="absolute left-3 top-3 flex flex-col gap-2">
-                            {product.newArrival === true && (
-                              <span className="bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-black shadow-sm">
-                                New
-                              </span>
-                            )}
-
-                            {product.discountEnabled && discountValue > 0 && (
-                              <span className="bg-black px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
-                                Sale
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="absolute bottom-3 left-3 right-3 translate-y-3 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-                            <span className="block rounded-full bg-white/95 px-4 py-3 text-center text-[9px] font-bold uppercase tracking-[0.2em] text-black backdrop-blur-sm">
-                              View Product
-                            </span>
-                          </div>
+                  return (
+                    <div
+                      key={category}
+                      id={sectionId}
+                      className={categoryIndex > 0 ? "mt-24 border-t border-black/10 pt-20 md:mt-32 md:pt-28" : ""}
+                    >
+                      <div className="mb-10 flex items-end justify-between gap-6">
+                        <div>
+                          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.32em] text-black/40">
+                            FX Collection
+                          </p>
+                          <h2 className="text-4xl font-black uppercase tracking-[-0.055em] md:text-6xl">
+                            {category}
+                          </h2>
+                          <p className="mt-3 max-w-xl text-sm leading-6 text-black/50">
+                            Curated {category.toLowerCase()} fashion selected for the FX Fashion Gallery collection.
+                          </p>
                         </div>
 
-                        <div className="pt-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
-                              {product.category || "Fashion"}
-                            </p>
+                        <Link
+                          to={"/shop?category=" + category}
+                          className="hidden border-b border-black pb-1 text-[10px] font-bold uppercase tracking-[0.2em] sm:block"
+                        >
+                          View All
+                        </Link>
+                      </div>
 
-                            {Number(product.rating || 0) > 0 && (
-                              <span className="text-[9px] font-semibold tracking-[0.08em] text-black/45">
-                                ★ {Number(product.rating).toFixed(1)}
-                              </span>
-                            )}
-                          </div>
+                      {categoryProducts.length > 0 ? (
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 md:grid-cols-3 md:gap-y-12 lg:grid-cols-4">
+                          {categoryProducts.map((product) => {
+                            const basePrice =
+                              Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
+                            const discountValue = Number(product.discountValue || 0);
+                            const salePrice =
+                              product.discountEnabled === true && discountValue > 0
+                                ? product.discountType === "percentage"
+                                  ? Math.max(0, basePrice - (basePrice * discountValue / 100))
+                                  : Math.max(0, basePrice - discountValue)
+                                : basePrice;
 
-                          <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 md:text-[15px]">
-                            {product.name || "Untitled Product"}
-                          </h3>
+                            const productId =
+                              product.id || "default-" + products.indexOf(product);
 
-                          <div className="mt-2.5 flex items-baseline gap-2">
-                            <span className="text-[15px] font-bold tracking-tight">
-                              ৳{salePrice.toLocaleString()}
-                            </span>
+                            return (
+                              <article key={productId} className="group">
+                                <Link to={"/product/" + productId} className="block">
+                                  <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5] shadow-sm transition duration-500 group-hover:-translate-y-1 group-hover:shadow-xl">
+                                    {product.imageData ? (
+                                      <img
+                                        src={product.imageData}
+                                        alt={product.name || "Product"}
+                                        className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-105"
+                                      />
+                                    ) : (
+                                      <div className="flex h-full items-center justify-center text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
+                                        FX Fashion Gallery
+                                      </div>
+                                    )}
 
-                            {salePrice < basePrice && (
-                              <span className="text-xs text-black/35 line-through">
-                                ৳{basePrice.toLocaleString()}
-                              </span>
-                            )}
-                          </div>
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+
+                                    <div className="absolute left-3 top-3 flex flex-col gap-2">
+                                      {product.newArrival === true && (
+                                        <span className="bg-white px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-black shadow-sm">
+                                          New
+                                        </span>
+                                      )}
+
+                                      {product.discountEnabled === true && discountValue > 0 && (
+                                        <span className="bg-black px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] text-white shadow-sm">
+                                          Sale
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="absolute bottom-3 left-3 right-3 translate-y-3 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                                      <span className="block rounded-full bg-white/95 px-4 py-3 text-center text-[9px] font-bold uppercase tracking-[0.2em] text-black backdrop-blur-sm">
+                                        View Product
+                                      </span>
+                                    </div>
+                                  </div>
+                                </Link>
+
+                                <div className="pt-4">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">
+                                      {product.category || category}
+                                    </p>
+
+                                    {Number(product.rating || 0) > 0 && (
+                                      <span className="text-[9px] font-semibold tracking-[0.08em] text-black/45">
+                                        ★ {Number(product.rating).toFixed(1)}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <Link to={"/product/" + productId}>
+                                    <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 md:text-[15px]">
+                                      {product.name || "Untitled Product"}
+                                    </h3>
+                                  </Link>
+
+                                  <div className="mt-2.5 flex items-baseline gap-2">
+                                    <span className="text-[15px] font-bold tracking-tight">
+                                      ৳{salePrice.toLocaleString()}
+                                    </span>
+
+                                    {salePrice < basePrice && (
+                                      <span className="text-xs text-black/35 line-through">
+                                        ৳{basePrice.toLocaleString()}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      addToCart(
+                                        product,
+                                        Array.isArray(product.sizes) && product.sizes.length > 0
+                                          ? product.sizes[0]
+                                          : "M",
+                                        1
+                                      );
+                                      setAddedProduct(product.name);
+                                      setTimeout(() => setAddedProduct(""), 1800);
+                                    }}
+                                    className="mt-4 w-full rounded-full bg-black py-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+                                  >
+                                    {addedProduct === product.name ? "Added to Cart ✓" : "Add to Cart"}
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                      ) : (
+                        <div className="border border-black/10 bg-white px-6 py-12 text-center">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/35">
+                            New collection coming soon
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
