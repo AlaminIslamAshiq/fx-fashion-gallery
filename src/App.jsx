@@ -366,7 +366,15 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                   {["Men", "Women", "Kids", "New Arrivals", "Sale"].map((item) => (
                     <a
                       key={item}
-                      href="/shop"
+                      href={
+                        item === "Men"
+                          ? "#men"
+                          : item === "Women"
+                            ? "#women"
+                            : item === "Kids"
+                              ? "#kids"
+                              : "/shop"
+                      }
                       className="border border-white/30 px-5 py-2.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
                     >
                       {item}
@@ -376,10 +384,10 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
                 <div className="mt-9 flex flex-wrap justify-center gap-3">
                   <a
-                    href={homepageSettings.heroButtonLink || "/shop"}
+                    href={homepageSettings.heroButtonLink || "#collections"}
                     className="bg-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white"
                   >
-                    {homepageSettings.heroButtonText || "Shop Collection"}
+                    {homepageSettings.heroButtonText || "Explore Products"}
                   </a>
                 </div>
               </div>
