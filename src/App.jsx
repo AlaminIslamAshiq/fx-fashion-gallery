@@ -9,7 +9,9 @@ import Checkout from './pages/Checkout.jsx'
 import Admin from './pages/Admin.jsx'
 import Account from './pages/Account.jsx'
 import Info from './pages/Info.jsx'
+import Wishlist from './pages/Wishlist.jsx'
 import { CartProvider } from './context/CartContext.jsx'
+import { WishlistProvider } from './context/WishlistContext.jsx'
 import { collection, doc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase.js'
 
@@ -286,7 +288,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                 ["🧒", "Kids", "/shop?category=Kids"],
                 ["✨", "New Arrivals", "/shop?filter=new"],
                 ["🔥", "Sale", "/shop?filter=sale"],
-                ["❤️", "Wishlist", "#"],
+                ["❤️", "Wishlist", "/wishlist"],
                 ["🛒", "Cart", "/cart"],
                 ["📦", "Track Order", "#"],
                 ["📞", "Contact Us", "#"],
@@ -932,19 +934,22 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
 
 export default function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
+    <WishlistProvider>
+      <CartProvider>
+        <BrowserRouter>
         <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/account" element={<Account />} />
           <Route path="/info/:page" element={<Info />} />
         </Routes>
-      </BrowserRouter>
-    </CartProvider>
+        </BrowserRouter>
+      </CartProvider>
+    </WishlistProvider>
   )
 }
