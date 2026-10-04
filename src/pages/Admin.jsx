@@ -222,7 +222,7 @@ const [editingProductId, setEditingProductId] = useState(null);
     const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
       const firebaseOrders = snapshot.docs.map((item) => ({ ...item.data(), id: item.data().id || item.id, firestoreId: item.id }));
       firebaseOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      setOrders(firebaseOrders);
+      setOrders(firebaseOrders); setNotice("");
     }, (error) => { console.error("ORDERS FIREBASE ERROR:", error);
       setNotice(error?.message || "Could not load orders from Firebase.");
     });
