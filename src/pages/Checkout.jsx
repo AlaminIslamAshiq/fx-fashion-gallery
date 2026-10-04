@@ -26,7 +26,7 @@ export default function Checkout() {
     (buyNowIndex !== null && buyNowIndex !== "direct"
       ? allProducts[Number(buyNowIndex)]
       : null);
-  const checkoutItems = directProduct
+  const rawCheckoutItems = directProduct
     ? [{
         ...directProduct,
         size: buyNowIndex === "direct" ? (directProduct.size || "M") : buyNowSize,
@@ -35,6 +35,26 @@ export default function Checkout() {
           : buyNowQuantity,
       }]
     : cartItems;
+
+  const checkoutItems = rawCheckoutItems.map((item) => {
+    const parsedPrice = Number(String(item.price || "0").replace(/[^0-9.]/g, "")) || 0;
+    const originalPrice = Number(item.originalPrice || parsedPrice);
+    const basePrice = originalPrice;
+    const discountValue = Number(item.discountValue || 0);
+    const salePrice = item.discountEnabled && discountValue > 0
+      ? item.discountType === "percentage"
+        ? Math.max(0, basePrice - (basePrice * discountValue) / 100)
+        : Math.max(0, basePrice - discountValue)
+      : Number(item.salePrice ?? basePrice);
+
+    return {
+      ...item,
+      price: `৳${salePrice.toLocaleString()}`,
+      salePrice,
+      originalPrice,
+      selectedImageData: item.selectedImageData || item.imageData || "",
+    };
+  });
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", city: "", area: "" });
@@ -111,6 +131,9 @@ export default function Checkout() {
       quantity: Math.max(1, Number(item.quantity || 1)),
       color: String(item.color || ""),
       image: String(item.image || ""),
+      imageData: String(item.selectedImageData || item.imageData || "").length <= 700000
+        ? String(item.selectedImageData || item.imageData || "")
+        : "",
     }));
     const order = {
       id: newOrderId,

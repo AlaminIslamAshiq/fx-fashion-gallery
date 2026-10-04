@@ -1119,7 +1119,7 @@ const handleImage = (e) => {
                           {(order.items || []).map((item, index) => (
                             <div key={`${item.name}-${index}`} className="flex gap-4 border border-black/10 p-4">
                               <img
-                                src={item.imageData || (item.image ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=300&q=80` : "")}
+                                src={item.imageData || item.selectedImageData || (item.image ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=300&q=80` : "")}
                                 alt={item.name}
                                 className="h-24 w-20 shrink-0 object-cover bg-[#f0f0ed]"
                               />
@@ -1130,7 +1130,7 @@ const handleImage = (e) => {
                                   <p>Size: <span className="font-semibold text-black">{item.size || "—"}</span></p>
                                   <p>Qty: <span className="font-semibold text-black">{item.quantity || 0}</span></p>
                                   <p>Unit Price: <span className="font-semibold text-black">{item.price}</span></p>
-                                  <p>Line Total: <span className="font-semibold text-black">৳{(Number(String(item.price).replace(/[^0-9]/g, "")) * Number(item.quantity || 0)).toLocaleString()}</span></p>
+                                  <p>Line Total: <span className="font-semibold text-black">৳{(Number(item.salePrice ?? String(item.price || "0").replace(/[^0-9.]/g, "")) * Number(item.quantity || 0)).toLocaleString()}</span></p>
                                 </div>
                               </div>
                             </div>
