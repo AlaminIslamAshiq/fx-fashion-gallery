@@ -108,7 +108,14 @@ export default function ProductDetails() {
     };
   }, [id]);
 
-  const gallery = useMemo(() => getGallery(product || {}), [product]);
+  const gallery = useMemo(() => {
+    try {
+      return getGallery(product || {});
+    } catch (error) {
+      console.error("Gallery error:", error);
+      return [];
+    }
+  }, [product]);
 
   const colors = useMemo(
     () => [...new Set(gallery.map((item) => item.color).filter(Boolean))],
@@ -238,7 +245,7 @@ export default function ProductDetails() {
           <div className="relative overflow-hidden rounded-3xl bg-black/[0.03]">
             {selectedImageData && (
               <img
-                src={selectedImageData}
+                src={String(selectedImageData || "")}
                 alt={product.name}
                 className="aspect-square w-full object-cover"
               />
@@ -262,7 +269,7 @@ export default function ProductDetails() {
               {gallery.map((item, index) => (
                 <button
                   type="button"
-                  key={`${item.imageData.slice(-20)}-${index}`}
+                  key={`${String(item.imageData || "").slice(-20)}-${index}`}
                   onClick={() => {
                     setSelectedGalleryIndex(index);
                     if (item.color) setSelectedColor(item.color);
@@ -274,7 +281,7 @@ export default function ProductDetails() {
                   }`}
                 >
                   <img
-                    src={item.imageData}
+                    src={String(item.imageData || "")}
                     alt=""
                     className="h-full w-full object-cover"
                   />
