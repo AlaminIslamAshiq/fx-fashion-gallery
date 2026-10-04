@@ -385,6 +385,45 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
     }
   };
 
+  const deleteProduct = async (productId) => {
+    if (!productId) {
+      setNotice("Product delete failed: Product ID not found.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this product? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "products", productId));
+
+      setProducts((current) =>
+        current.filter((product) => product.id !== productId)
+      );
+
+      const localProducts = JSON.parse(
+        localStorage.getItem("fx_products") || "[]"
+      );
+
+      localStorage.setItem(
+        "fx_products",
+        JSON.stringify(
+          localProducts.filter((product) => product.id !== productId)
+        )
+      );
+
+      setNotice("Product deleted successfully.");
+    } catch (error) {
+      console.error("Delete product failed:", error);
+      setNotice(
+        `Product delete failed: ${error?.message || "Unknown error"}`
+      );
+    }
+  };
+
   const deleteOrder = async (firestoreId, orderId) => {
     if (!firestoreId) {
       setNotice("Order delete failed: Firestore ID not found.");
