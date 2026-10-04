@@ -1227,7 +1227,7 @@ const [editingProductId, setEditingProductId] = useState(null);
 
         <div className="border border-black/10 p-5">
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-black/40">Current Admin</p>
-          <p className="mt-2 break-all text-sm font-semibold">{auth.currentUser?.email || "Authenticated Admin"}</p>
+          <p className="mt-2 break-all text-sm font-semibold">{(auth.currentUser?.email || "Authenticated Admin") + " | UID: " + (auth.currentUser?.uid || "")}</p>
         </div>
       </div>
 
