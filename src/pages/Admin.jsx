@@ -38,6 +38,30 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
   const [orderSearch, setOrderSearch] = useState("");
+  const DEFAULT_NAVIGATION = [
+    { id: "home", label: "Home", path: "/", icon: "⌂", desktop: true, mobile: true, badge: "" },
+    { id: "shop", label: "Shop All", path: "/shop", icon: "🛍️", desktop: false, mobile: true, badge: "" },
+    { id: "men", label: "Men", path: "/shop?category=Men", icon: "👔", desktop: true, mobile: true, badge: "" },
+    { id: "women", label: "Women", path: "/shop?category=Women", icon: "👗", desktop: true, mobile: true, badge: "" },
+    { id: "kids", label: "Kids", path: "/shop?category=Kids", icon: "🧒", desktop: true, mobile: true, badge: "" },
+    { id: "new-arrivals", label: "New Arrivals", path: "/shop?filter=new", icon: "✨", desktop: true, mobile: true, badge: "New" },
+    { id: "sale", label: "Sale", path: "/shop?filter=sale", icon: "🔥", desktop: true, mobile: true, badge: "Sale" },
+    { id: "account", label: "My Account / Login", path: "/account", icon: "👤", desktop: false, mobile: true, badge: "" },
+    { id: "wishlist", label: "Wishlist", path: "/wishlist", icon: "❤️", desktop: false, mobile: true, badge: "" },
+    { id: "cart", label: "Cart", path: "/cart", icon: "🛒", desktop: false, mobile: true, badge: "" },
+    { id: "track-order", label: "Track Order", path: "/track-order", icon: "📦", desktop: false, mobile: true, badge: "" },
+    { id: "contact", label: "Contact Us", path: "/info/contact", icon: "📞", desktop: false, mobile: true, badge: "" },
+  ];
+
+  const [navigationItems, setNavigationItems] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("fx_navigation") || "null");
+      return Array.isArray(saved) && saved.length ? saved : DEFAULT_NAVIGATION;
+    } catch {
+      return DEFAULT_NAVIGATION;
+    }
+  });
+
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deliverySettings, setDeliverySettings] = useState(() => {
@@ -313,6 +337,81 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
   }
 
 
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "navigation"), (snapshot) => {
+      if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
+        const items = snapshot.data().items;
+        setNavigationItems(items);
+        localStorage.setItem("fx_navigation", JSON.stringify(items));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const saveNavigationSettings = async () => {
+    try {
+      const cleanItems = navigationItems.map((item, index) => ({
+        ...item,
+        id: item.id || `nav-${Date.now()}-${index}`,
+        label: String(item.label || "").trim(),
+        path: String(item.path || "/").trim() || "/",
+        icon: item.icon || "•",
+        desktop: item.desktop !== false,
+        mobile: item.mobile !== false,
+        badge: item.badge || "",
+        order: index,
+      }));
+
+      await setDoc(
+        doc(db, "settings", "navigation"),
+        { items: cleanItems, updatedAt: new Date().toISOString() },
+        { merge: true }
+      );
+
+      setNavigationItems(cleanItems);
+      localStorage.setItem("fx_navigation", JSON.stringify(cleanItems));
+      window.dispatchEvent(new Event("fx-navigation-updated"));
+      setNotice("Navigation saved successfully.");
+    } catch (error) {
+      console.error("Navigation save failed:", error);
+      setNotice("Could not save Navigation settings to Firebase.");
+    }
+  };
+
+  const addNavigationItem = () => {
+    setNavigationItems((current) => [
+      ...current,
+      {
+        id: `nav-${Date.now()}`,
+        label: "New Menu",
+        path: "/shop",
+        icon: "•",
+        desktop: true,
+        mobile: true,
+        badge: "",
+      },
+    ]);
+  };
+
+  const updateNavigationItem = (id, changes) => {
+    setNavigationItems((current) =>
+      current.map((item) => item.id === id ? { ...item, ...changes } : item)
+    );
+  };
+
+  const deleteNavigationItem = (id) => {
+    if (!window.confirm("Delete this navigation item?")) return;
+    setNavigationItems((current) => current.filter((item) => item.id !== id));
+  };
+
+  const resetNavigation = () => {
+    if (!window.confirm("Restore the default FX Fashion Gallery navigation?")) return;
+    setNavigationItems(DEFAULT_NAVIGATION);
+    localStorage.setItem("fx_navigation", JSON.stringify(DEFAULT_NAVIGATION));
+    setNotice("Default navigation restored. Click Save Navigation to publish it.");
+  };
 
   const saveDeliverySettings = async () => {
     try {
@@ -833,6 +932,163 @@ const handleImage = (e) => {
             </p>
           </div>
         </section>} 
+
+        {activeTab === "Navigation" && (
+          <section className="mt-8 space-y-6">
+            <div className="border border-black/10 bg-white p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-black/40">
+                    Navigation Management
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Website Navigation
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-black/50">
+                    Control the customer-facing desktop and mobile menus from one place.
+                    Changes are published to the website through Firebase.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={addNavigationItem}
+                    className="bg-black px-5 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-white"
+                  >
+                    + Add Menu
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetNavigation}
+                    className="border border-black/15 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.16em]"
+                  >
+                    Reset Default
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveNavigationSettings}
+                    className="bg-black px-5 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-white"
+                  >
+                    Save Navigation
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {navigationItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="border border-black/10 bg-white p-5 shadow-sm"
+                >
+                  <div className="grid gap-4 lg:grid-cols-[auto_1fr_1fr_auto] lg:items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center border border-black/10 bg-black/[0.03] text-lg">
+                        {item.icon || "•"}
+                      </div>
+                      <div className="flex h-8 min-w-8 items-center justify-center border border-black/10 text-[10px] font-bold text-black/45">
+                        {index + 1}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        value={item.label}
+                        onChange={(e) =>
+                          updateNavigationItem(item.id, { label: e.target.value })
+                        }
+                        placeholder="Menu Name"
+                        className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+                      />
+                      <input
+                        value={item.icon}
+                        onChange={(e) =>
+                          updateNavigationItem(item.id, { icon: e.target.value })
+                        }
+                        placeholder="Icon / Emoji"
+                        className="border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+                      />
+                    </div>
+
+                    <div>
+                      <input
+                        value={item.path}
+                        onChange={(e) =>
+                          updateNavigationItem(item.id, { path: e.target.value })
+                        }
+                        placeholder="/shop or https://example.com"
+                        className="w-full border border-black/10 px-4 py-3 text-sm outline-none focus:border-black"
+                      />
+                      <select
+                        value={item.badge || ""}
+                        onChange={(e) =>
+                          updateNavigationItem(item.id, { badge: e.target.value })
+                        }
+                        className="mt-2 w-full border border-black/10 px-4 py-3 text-xs outline-none focus:border-black"
+                      >
+                        <option value="">No Badge</option>
+                        <option value="New">New</option>
+                        <option value="Sale">Sale</option>
+                        <option value="Hot">Hot</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateNavigationItem(item.id, { desktop: item.desktop === false })
+                        }
+                        className={`rounded-full px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                          item.desktop !== false
+                            ? "bg-black text-white"
+                            : "bg-black/5 text-black/40"
+                        }`}
+                      >
+                        Desktop
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateNavigationItem(item.id, { mobile: item.mobile === false })
+                        }
+                        className={`rounded-full px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] ${
+                          item.mobile !== false
+                            ? "bg-black text-white"
+                            : "bg-black/5 text-black/40"
+                        }`}
+                      >
+                        Mobile
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteNavigationItem(item.id)}
+                        className="rounded-full bg-red-50 px-3 py-2 text-[9px] font-bold uppercase tracking-[0.12em] text-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border border-black/10 bg-black/[0.02] p-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]">
+                Navigation Tips
+              </p>
+              <p className="mt-2 text-xs leading-6 text-black/50">
+                Use internal paths such as <b>/shop</b> or
+                <b> /shop?category=Men</b>. External URLs such as
+                <b> https://example.com</b> are also supported by the navigation data.
+                The order above controls the menu order.
+              </p>
+            </div>
+          </section>
+        )}
 
         {activeTab === "Customers" && <section className="mt-8 border border-black/10 bg-white">
           <div className="border-b border-black/10 p-6">

@@ -120,6 +120,18 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   }, []);
 
   useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "navigation"), (snapshot) => {
+      if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
+        const items = snapshot.data().items;
+        setNavigationItems(items);
+        localStorage.setItem("fx_navigation", JSON.stringify(items));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const syncSettings = () => setSiteSettings(getSiteSettings());
     window.addEventListener("storage", syncSettings);
     window.addEventListener("fx-settings-updated", syncSettings);
@@ -130,6 +142,30 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   }, []);
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const defaultNavigationItems = [
+    { id: "home", label: "Home", path: "/", icon: "⌂", desktop: true, mobile: true, badge: "" },
+    { id: "shop", label: "Shop All", path: "/shop", icon: "🛍️", desktop: false, mobile: true, badge: "" },
+    { id: "men", label: "Men", path: "/shop?category=Men", icon: "👔", desktop: true, mobile: true, badge: "" },
+    { id: "women", label: "Women", path: "/shop?category=Women", icon: "👗", desktop: true, mobile: true, badge: "" },
+    { id: "kids", label: "Kids", path: "/shop?category=Kids", icon: "🧒", desktop: true, mobile: true, badge: "" },
+    { id: "new-arrivals", label: "New Arrivals", path: "/shop?filter=new", icon: "✨", desktop: true, mobile: true, badge: "New" },
+    { id: "sale", label: "Sale", path: "/shop?filter=sale", icon: "🔥", desktop: true, mobile: true, badge: "Sale" },
+    { id: "account", label: "My Account / Login", path: "/account", icon: "👤", desktop: false, mobile: true, badge: "" },
+    { id: "wishlist", label: "Wishlist", path: "/wishlist", icon: "❤️", desktop: false, mobile: true, badge: "" },
+    { id: "cart", label: "Cart", path: "/cart", icon: "🛒", desktop: false, mobile: true, badge: "" },
+    { id: "track-order", label: "Track Order", path: "/track-order", icon: "📦", desktop: false, mobile: true, badge: "" },
+    { id: "contact", label: "Contact Us", path: "/info/contact", icon: "📞", desktop: false, mobile: true, badge: "" },
+  ];
+
+  const [navigationItems, setNavigationItems] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("fx_navigation") || "null");
+      return Array.isArray(saved) && saved.length ? saved : defaultNavigationItems;
+    } catch {
+      return defaultNavigationItems;
+    }
+  });
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [addedProduct, setAddedProduct] = useState("")
   const { cartCount, addToCart } = useCart()
@@ -160,22 +196,22 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
           </Link>
 
           <nav className="hidden items-center gap-9 lg:flex">
-            {[
-              ["Home", "/"],
-              ["Men", "/shop?category=Men"],
-              ["Women", "/shop?category=Women"],
-              ["Kids", "/shop?category=Kids"],
-              ["New Arrivals", "/shop?filter=new"],
-              ["Sale", "/shop?filter=sale"],
-            ].map(([item, path]) => (
-              <Link
-                key={item}
-                to={path}
-                className="text-[11px] font-semibold uppercase tracking-[0.16em] transition-opacity hover:opacity-40"
-              >
-                {item}
-              </Link>
-            ))}
+            {navigationItems
+              .filter((item) => item.desktop !== false)
+              .map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className="relative text-[11px] font-semibold uppercase tracking-[0.16em] transition-opacity hover:opacity-40"
+                >
+                  {item.label}
+                  {item.badge && (
+                    <span className="absolute -right-4 -top-3 text-[7px] font-bold uppercase tracking-normal text-black/45">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
           </nav>
 
           {searchOpen && (
@@ -301,29 +337,24 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                 🔍 <span>Search</span>
               </button>
 
-              {[
-                ["👤", "My Account / Login", "/account"],
-                ["🛍️", "Shop All", "/shop"],
-                ["👔", "Men", "/shop?category=Men"],
-                ["👗", "Women", "/shop?category=Women"],
-                ["🧒", "Kids", "/shop?category=Kids"],
-                ["✨", "New Arrivals", "/shop?filter=new"],
-                ["🔥", "Sale", "/shop?filter=sale"],
-                ["❤️", "Wishlist", "/wishlist"],
-                ["🛒", "Cart", "/cart"],
-                ["📦", "Track Order", "/track-order"],
-                ["📞", "Contact Us", "/info/contact"],
-              ].map(([icon, label, href]) => (
-                <Link
-                  key={label}
-                  to={href}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-4 border-b border-black/10 py-4 text-[12px] font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-45"
-                >
-                  <span className="text-base">{icon}</span>
-                  <span>{label}</span>
-                </Link>
-              ))}
+              {navigationItems
+                .filter((item) => item.mobile !== false)
+                .map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.path}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-4 border-b border-black/10 py-4 text-[12px] font-bold uppercase tracking-[0.12em] transition-opacity hover:opacity-45"
+                  >
+                    <span className="text-base">{item.icon || "•"}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="text-[8px] font-bold tracking-[0.12em] text-black/40">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                ))}
 
               <div className="mt-6 border-t border-black/10 pt-5">
               </div>
