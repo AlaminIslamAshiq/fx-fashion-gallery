@@ -218,6 +218,7 @@ const [editingProductId, setEditingProductId] = useState(null);
   }, []);
 
   useEffect(() => {
+    if (!loggedIn || auth.currentUser?.uid !== "JfLmcMg26BOJ7VNqyifMzHuV93E3") return;
     const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
       const firebaseOrders = snapshot.docs.map((item) => ({ ...item.data(), id: item.data().id || item.id, firestoreId: item.id }));
       firebaseOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
