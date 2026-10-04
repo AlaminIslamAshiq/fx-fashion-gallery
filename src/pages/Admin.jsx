@@ -223,7 +223,7 @@ const [editingProductId, setEditingProductId] = useState(null);
       firebaseOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       setOrders(firebaseOrders);
     }, (error) => { console.error("ORDERS FIREBASE ERROR:", error);
-      setNotice("Could not load orders from Firebase.");
+      setNotice(error?.message || "Could not load orders from Firebase.");
     });
     return () => unsubscribe();
   }, [loggedIn]);
