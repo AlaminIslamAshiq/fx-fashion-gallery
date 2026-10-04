@@ -1038,7 +1038,9 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
   )
 }
 
-export default function App() {
+export default function FloatingContactButtons(){return (<div className="fixed bottom-5 right-4 z-[999] flex flex-col gap-2"><a href="https://wa.me/8801923092803" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg text-lg font-bold">W</a><a href="https://www.instagram.com/fx.fashion.gallery" target="_blank" rel="noreferrer" aria-label="Instagram" className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white shadow-lg text-sm font-bold">IG</a><a href="https://www.facebook.com/share/1AHKVgYfyy/" target="_blank" rel="noreferrer" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-lg text-sm font-bold">f</a></div>)}
+
+function App() {
   return (
     <WishlistProvider>
       <CartProvider>
