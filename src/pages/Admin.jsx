@@ -351,6 +351,45 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
 
       const order = orders.find((item) => item.firestoreId === id);
 
+      const deleteOrder = async (firestoreId, orderId) => {
+        if (!firestoreId) {
+          setNotice("Order delete failed: Firestore ID not found.");
+          return;
+        }
+
+        const confirmed = window.confirm(
+          `Delete order ${orderId || firestoreId}? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        try {
+          await deleteDoc(doc(db, "orders", firestoreId));
+
+          setOrders((current) =>
+            current.filter((item) => item.firestoreId !== firestoreId)
+          );
+
+          const localOrders = JSON.parse(localStorage.getItem("fx_orders") || "[]");
+          localStorage.setItem(
+            "fx_orders",
+            JSON.stringify(
+              localOrders.filter(
+                (item) =>
+                  item.firestoreId !== firestoreId &&
+                  item.id !== orderId
+              )
+            )
+          );
+
+          setNotice(`Order ${orderId || firestoreId} deleted successfully.`);
+        } catch (error) {
+          console.error("Delete order failed:", error);
+          setNotice(`Order delete failed: ${error?.message || "Unknown error"}`);
+        }
+      };
+
+
       if (order?.id) {
         await setDoc(doc(db, "orderTracking", order.id), {
           id: order.id,
