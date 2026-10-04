@@ -87,10 +87,14 @@ export default function ProductDetails() {
         const snap = await getDoc(doc(db, "products", id));
 
         if (mounted) {
-          setProduct(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+          if (snap.exists()) {
+            setProduct({ id: snap.id, ...snap.data() });
+          } else {
+            setProduct(null);
+          }
         }
       } catch (error) {
-        console.error(error);
+        console.error("Product details error:", error);
         if (mounted) setProduct(null);
       } finally {
         if (mounted) setLoading(false);
