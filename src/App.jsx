@@ -528,9 +528,9 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                           : basePrice;
 
                       return (
-                        <a
+                        <Link
                           key={product.id}
-                          href={"/product/" + product.id}
+                          to={"/product/" + product.id}
                           className="group block"
                         >
                           <div className="relative aspect-[4/5] overflow-hidden bg-[#f1f1ef]">
@@ -569,7 +569,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                               )}
                             </div>
                           </div>
-                        </a>
+                        </Link>
                       );
                     })}
                 </div>

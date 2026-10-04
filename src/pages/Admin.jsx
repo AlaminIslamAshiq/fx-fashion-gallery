@@ -416,49 +416,49 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
     }, {})
   ).sort((a, b) => new Date(b.lastOrder || 0) - new Date(a.lastOrder || 0));
 
-  const addProduct = async (e) => {
+  const saveProduct = async (e) => {
     e.preventDefault();
-    if (newProduct.name.trim() == "" || newProduct.price.trim() == "" || newProduct.imageData == "") {
-      setNotice("Please add the product name, price and image before saving.");
+    setNotice("");
+
+    const validImages = productImages.filter((item) => item.imageData);
+    if (!newProduct.name.trim() || !String(newProduct.price).trim() || !validImages.length) {
+      setNotice("Please add the product name, price and at least one image before saving.");
       return;
     }
+
+    const payload = {
+      name: newProduct.name.trim(),
+      category: newProduct.category,
+      price: String(newProduct.price).trim(),
+      discountEnabled: Boolean(newProduct.discountEnabled),
+      discountType: newProduct.discountType,
+      discountValue: String(newProduct.discountValue ?? ""),
+      stock: String(newProduct.stock ?? ""),
+      sizes: String(newProduct.sizes ?? ""),
+      rating: String(newProduct.rating ?? "5"),
+      featured: Boolean(newProduct.featured),
+      newArrival: Boolean(newProduct.newArrival),
+      active: newProduct.active !== false,
+      description: String(newProduct.description ?? ""),
+      imageData: validImages[0].imageData,
+      images: validImages.slice(0, 6).map((item) => ({
+        imageData: item.imageData,
+        color: String(item.color || "").trim(),
+      })),
+    };
+
     try {
-      await addDoc(collection(db, "products"), {
-        name: newProduct.name.trim(),
-        category: newProduct.category,
-        price: newProduct.price,
-        discountEnabled: newProduct.discountEnabled,
-        discountType: newProduct.discountType,
-        discountValue: newProduct.discountValue,
-        stock: newProduct.stock,
-        sizes: newProduct.sizes,
-        rating: newProduct.rating,
-        featured: newProduct.featured,
-        newArrival: newProduct.newArrival,
-        active: newProduct.active,
-        description: newProduct.description,
-        imageData: newProduct.imageData,
-        createdAt: new Date().toISOString(),
-      });
-      setNewProduct({
-        name: "",
-        category: "Men",
-        price: "",
-        discountEnabled: false,
-        discountType: "percentage",
-        discountValue: "",
-        stock: "",
-        sizes: "",
-        rating: "5",
-        featured: false,
-        newArrival: false,
-        active: true,
-        description: "",
-        imageData: ""
-      });
-      setImageName("");
-      setNotice("Product added successfully.");
+      if (editingProductId) {
+        await updateDoc(doc(db, "products", editingProductId), payload);
+        setNotice("Product updated successfully.");
+      } else {
+        await addDoc(collection(db, "products"), { ...payload, createdAt: new Date().toISOString() });
+        setNotice("Product added successfully.");
+      }
+      resetProductForm();
+      setEditingProductId(null);
     } catch (error) {
+      console.error("PRODUCT SAVE ERROR:", error);
       setNotice("Could not save product to Firebase.");
     }
   };
@@ -488,6 +488,61 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+
+const compressProductImage = (file) => new Promise((resolve, reject) => {
+  if (!file) return resolve("");
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const maxSize = 1000;
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.78));
+    };
+    img.onerror = reject;
+    img.src = reader.result;
+  };
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+const handleMultipleProductImage = async (index, event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const imageData = await compressProductImage(file);
+    setProductImages((current) => current.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, imageData } : item
+    ));
+    if (index === 0) {
+      setNewProduct((current) => ({ ...current, imageData }));
+    }
+    setImageName(file.name);
+  } catch (error) {
+    console.error("Product image error:", error);
+    setNotice("Could not process the product image.");
+  }
+};
+
+const addProductImageSlot = () => {
+  setProductImages((current) =>
+    current.length >= 6 ? current : [...current, { imageData: "", color: "" }]
+  );
+};
+
+const removeProductImageSlot = (index) => {
+  setProductImages((current) => {
+    const next = current.filter((_, itemIndex) => itemIndex !== index);
+    const normalized = next.length ? next : [{ imageData: "", color: "" }];
+    setNewProduct((product) => ({ ...product, imageData: normalized[0].imageData || "" }));
+    return normalized;
+  });
+};
 
 const updateProductImageColor = (index, color) => {
   setProductImages((current) =>
@@ -529,6 +584,7 @@ const resetProductForm = () => {
   });
   setProductImages([{ imageData: "", color: "" }]);
   setImageName("");
+  setEditingProductId(null);
 };
 
 const handleImage = (e) => {
@@ -734,7 +790,7 @@ const handleImage = (e) => {
           <div className="border-b border-black/10 p-6">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">Add Product</h2>
           </div>
-          <form onSubmit={editingProductId ? updateProduct : addProduct} className="grid gap-4 p-6 md:grid-cols-2">
+          <form onSubmit={saveProduct} className="grid gap-4 p-6 md:grid-cols-2">
             <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="Product Name" className="border border-black/15 px-4 py-3 text-sm outline-none" />
             <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="border border-black/15 px-4 py-3 text-sm outline-none">
               <option>Men</option><option>Women</option><option>Kids</option>

@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
-import { collection, addDoc, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, writeBatch } from "firebase/firestore";
 import { db } from "../firebase.js";
 
 export default function Checkout() {
@@ -99,17 +99,52 @@ export default function Checkout() {
     }
 
     const newOrderId = `FX-${Date.now().toString().slice(-8)}`;
-    const order = { id: newOrderId, customer, items: checkoutItems, subtotal, deliveryCharge, total, paymentMethod, transactionId: paymentMethod === "Cash on Delivery" ? "" : transactionId.trim(), paymentStatus: paymentMethod === "Cash on Delivery" ? "Not Required" : "Pending", status: "Pending", createdAt: new Date().toISOString() };
+    const createdAt = new Date().toISOString();
+    const orderItems = checkoutItems.map((item) => ({
+      productId: item.id || "",
+      name: String(item.name || "Product"),
+      category: String(item.category || ""),
+      price: String(item.price ?? "৳0"),
+      salePrice: Number(item.salePrice ?? 0),
+      originalPrice: Number(item.originalPrice ?? item.salePrice ?? 0),
+      size: String(item.size || ""),
+      quantity: Math.max(1, Number(item.quantity || 1)),
+      color: String(item.color || ""),
+      image: String(item.image || ""),
+    }));
+    const order = {
+      id: newOrderId,
+      customer: {
+        name: String(customer.name).trim(),
+        phone: String(customer.phone).trim(),
+        address: String(customer.address).trim(),
+        city: String(customer.city).trim(),
+        area: String(customer.area).trim(),
+      },
+      items: orderItems,
+      subtotal: Number(subtotal),
+      deliveryCharge: Number(deliveryCharge),
+      total: Number(total),
+      paymentMethod: String(paymentMethod),
+      transactionId: paymentMethod === "Cash on Delivery" ? "" : transactionId.trim(),
+      paymentStatus: paymentMethod === "Cash on Delivery" ? "Not Required" : "Pending",
+      status: "Pending",
+      createdAt,
+    };
+
     try {
-      await addDoc(collection(db, "orders"), order);
-      await setDoc(doc(db, "orderTracking", newOrderId), {
+      const batch = writeBatch(db);
+      batch.set(doc(db, "orders", newOrderId), order);
+      batch.set(doc(db, "orderTracking", newOrderId), {
         id: newOrderId,
         status: "Pending",
         paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-        updatedAt: order.createdAt,
+        createdAt,
+        updatedAt: createdAt,
       });
+      await batch.commit();
     } catch (error) {
+      console.error("ORDER PLACEMENT ERROR:", error);
       setValidationMessage("Could not place the order. Please try again.");
       return;
     }
