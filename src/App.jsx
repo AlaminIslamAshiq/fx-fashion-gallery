@@ -312,7 +312,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                 ["❤️", "Wishlist", "/wishlist"],
                 ["🛒", "Cart", "/cart"],
                 ["📦", "Track Order", "/track-order"],
-                ["📞", "Contact Us", "#"],
+                ["📞", "Contact Us", "/info/contact"],
               ].map(([icon, label, href]) => (
                 <Link
                   key={label}

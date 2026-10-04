@@ -6,9 +6,10 @@ const content = {
     title: "Contact Us",
     text: "We are here to help with products, orders, delivery and general questions.",
     items: [
-      ["WhatsApp", "01897523321"],
-      ["Phone", "01897523321"],
-      ["Business", "FX Fashion Gallery"],
+      ["WhatsApp", "01923092803"],
+      ["Facebook", "FX Fashion Gallery"],
+      ["Instagram", "@fx.fashion.gallery"],
+      ["Email", "fxfashiongallery@gmail.com"],
     ],
   },
   delivery: {
@@ -80,14 +81,45 @@ export default function Info() {
         </div>
 
         {page === "contact" && (
-          <a
-            href="https://wa.me/8801897523321"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-10 inline-flex bg-black px-7 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white"
-          >
-            Contact on WhatsApp
-          </a>
+          <div className="mt-10 grid gap-3 sm:grid-cols-2">
+            <a
+              href="https://wa.me/8801923092803"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between border border-black bg-black px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-white transition hover:bg-black/80"
+            >
+              WhatsApp
+              <span>↗</span>
+            </a>
+
+            <a
+              href="https://www.facebook.com/share/1H8HNrQDBH/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between border border-black/15 bg-white px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] transition hover:border-black"
+            >
+              Facebook
+              <span>↗</span>
+            </a>
+
+            <a
+              href="https://www.instagram.com/fx.fashion.gallery?stkn=MWo5dWFoZjVnd2hxcg=="
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-between border border-black/15 bg-white px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] transition hover:border-black"
+            >
+              Instagram
+              <span>↗</span>
+            </a>
+
+            <a
+              href="mailto:fxfashiongallery@gmail.com"
+              className="flex items-center justify-between border border-black/15 bg-white px-6 py-4 text-[10px] font-bold uppercase tracking-[0.18em] transition hover:border-black"
+            >
+              Email
+              <span>↗</span>
+            </a>
+          </div>
         )}
       </div>
     </main>
