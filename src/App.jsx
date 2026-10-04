@@ -14,11 +14,14 @@ import Wishlist from './pages/Wishlist.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { WishlistProvider } from './context/WishlistContext.jsx'
 import { collection, doc, onSnapshot } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth } from './firebase.js'
 import { db } from './firebase.js'
 
 const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern fashion. Timeless style.", primaryColor: "#111111", accentColor: "#f7f7f5", phone: "01897523321", whatsapp: "01897523321", currency: "৳", dhakaDelivery: 70, outsideDelivery: 120 }; function getSiteSettings() { try { return { ...defaultSiteSettings, ...JSON.parse(localStorage.getItem("fx_site_settings") || "{}") }; } catch { return defaultSiteSettings; } } function HomePage() {
   const [siteSettings, setSiteSettings] = useState(getSiteSettings);
   const [products, setProducts] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [homepageSettings, setHomepageSettings] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("fx_homepage_settings") || "{}");
@@ -92,6 +95,14 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
         setHomepageSettings(settings);
         localStorage.setItem("fx_homepage_settings", JSON.stringify(settings));
       }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
     });
 
     return () => unsubscribe();
@@ -235,9 +246,18 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
               <Search size={19} strokeWidth={1.5} />
             </button>
 
-            <button className="hidden transition-opacity hover:opacity-40 sm:block">
+            <Link
+              to="/account"
+              className="hidden items-center gap-2 transition-opacity hover:opacity-40 sm:flex"
+              aria-label="My Account"
+            >
               <UserRound size={19} strokeWidth={1.5} />
-            </button>
+              {currentUser && (
+                <span className="max-w-20 truncate text-[8px] font-bold uppercase tracking-[0.12em]">
+                  {currentUser.email?.split("@")[0] || "Account"}
+                </span>
+              )}
+            </Link>
 
             <button className="transition-opacity hover:opacity-40">
               <Heart size={19} strokeWidth={1.5} />
