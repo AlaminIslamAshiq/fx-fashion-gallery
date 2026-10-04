@@ -27,7 +27,13 @@ export default function Checkout() {
       ? allProducts[Number(buyNowIndex)]
       : null);
   const checkoutItems = directProduct
-    ? [{ ...directProduct, size: buyNowSize, quantity: buyNowQuantity }]
+    ? [{
+        ...directProduct,
+        size: buyNowIndex === "direct" ? (directProduct.size || "M") : buyNowSize,
+        quantity: buyNowIndex === "direct"
+          ? Number(directProduct.quantity || 1)
+          : buyNowQuantity,
+      }]
     : cartItems;
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -125,7 +131,7 @@ export default function Checkout() {
   const total = subtotal + deliveryCharge;
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] px-5 py-8 text-[#111] md:px-10">
+    <main className="min-h-screen bg-[#f7f7f5] px-4 py-6 text-[#111] sm:px-5 sm:py-8 md:px-10">
       <div className="mx-auto max-w-6xl">
         <Link to="/cart" className="text-[10px] font-bold uppercase tracking-[0.2em]">
           ← Back to Cart
@@ -135,7 +141,7 @@ export default function Checkout() {
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">
             FX Fashion Gallery
           </p>
-          <h1 className="mt-2 text-4xl font-semibold tracking-tight md:text-5xl">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
             Checkout
           </h1>
         </header>
@@ -177,7 +183,7 @@ export default function Checkout() {
               </div>
             )}
 
-            <section className="grid gap-10 py-10 lg:grid-cols-[1fr_360px]">
+            <section className="grid gap-8 py-8 sm:py-10 lg:grid-cols-[1fr_380px]">
           <form className="space-y-7">
             <div>
               <h2 className="text-[10px] font-bold uppercase tracking-[0.22em]">
@@ -339,7 +345,7 @@ export default function Checkout() {
             <button
               type="button"
               onClick={placeOrder}
-              className="mt-7 w-full bg-black py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
+              className="mt-7 min-h-12 w-full bg-black px-4 py-4 text-[9px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-black/80 sm:text-[10px] sm:tracking-[0.2em]"
             >
               Place Order
             </button>
