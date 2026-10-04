@@ -245,6 +245,14 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
   }, []);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setAuthLoading(false);
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (!loggedIn || auth.currentUser?.uid !== "JfLmcMg26BOJ7VNqyifMzHuV93E3") return;
     const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
       const firebaseOrders = snapshot.docs.map((item) => ({ ...item.data(), id: item.data().id || item.id, firestoreId: item.id }));
@@ -252,16 +260,6 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
       setOrders(firebaseOrders); setNotice("");
     }, (error) => { console.error("ORDERS FIREBASE ERROR:", error);
       setNotice(error?.message || "Could not load orders from Firebase.");
-    });
-    return () => unsubscribe();
-  }, [loggedIn]);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
-      const firebaseProducts = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-      setProducts(firebaseProducts);
-    }, (error) => { console.error("ORDERS FIREBASE ERROR:", error);
-      setNotice(error?.message || "Could not load products from Firebase.");
     });
     return () => unsubscribe();
   }, [loggedIn]);
@@ -318,10 +316,6 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
     }
   };
 
-  if (authLoading) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] text-sm text-black/50">Loading Admin...</main>;
-  }
-
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, "settings", "navigation"), (snapshot) => {
       if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
@@ -333,6 +327,11 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
 
     return () => unsubscribe();
   }, []);
+
+
+  if (authLoading) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] text-sm text-black/50">Loading Admin...</main>;
+  }
 
   if (!loggedIn) {
     return (
