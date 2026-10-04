@@ -803,23 +803,46 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                                     )}
                                   </div>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      addToCart(
-                                        product,
-                                        Array.isArray(product.sizes) && product.sizes.length > 0
-                                          ? product.sizes[0]
-                                          : "M",
-                                        1
-                                      );
-                                      setAddedProduct(product.name);
-                                      setTimeout(() => setAddedProduct(""), 1800);
-                                    }}
-                                    className="mt-4 w-full rounded-full bg-black py-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-black/80"
-                                  >
-                                    {addedProduct === product.name ? "Added to Cart ✓" : "Add to Cart"}
-                                  </button>
+                                  <div className="mt-4 grid grid-cols-2 gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        addToCart(
+                                          product,
+                                          Array.isArray(product.sizes) && product.sizes.length > 0
+                                            ? product.sizes[0]
+                                            : "M",
+                                          1
+                                        );
+                                        setAddedProduct(product.name);
+                                        setTimeout(() => setAddedProduct(""), 1800);
+                                      }}
+                                      className="rounded-full border border-black bg-white py-3 text-[8px] font-bold uppercase tracking-[0.16em] text-black transition hover:bg-black hover:text-white"
+                                    >
+                                      {addedProduct === product.name ? "Added ✓" : "Add to Cart"}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        localStorage.setItem(
+                                          "fx_buy_now",
+                                          JSON.stringify({
+                                            ...product,
+                                            size:
+                                              Array.isArray(product.sizes) && product.sizes.length > 0
+                                                ? product.sizes[0]
+                                                : "M",
+                                            quantity: 1,
+                                          })
+                                        );
+                                        window.location.href = "/checkout?buyNow=direct";
+                                      }}
+                                      className="rounded-full bg-black py-3 text-[8px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-black/80"
+                                    >
+                                      Buy Now
+                                    </button>
+                                  </div>
                                 </div>
                               </article>
                             );

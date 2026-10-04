@@ -10,6 +10,9 @@ export default function Checkout() {
   const buyNowIndex = searchParams.get("buyNow");
   const buyNowSize = searchParams.get("size") || "M";
   const buyNowQuantity = Number(searchParams.get("quantity") || 1);
+  const directBuyProduct = buyNowIndex === "direct"
+    ? JSON.parse(localStorage.getItem("fx_buy_now") || "null")
+    : null;
   const defaultProducts = [
     { category: "Men", name: "Essential Oversized Shirt", price: "৳1,890", image: "photo-1602810318383-e386cc2a3ccf", description: "A premium everyday oversized shirt designed for effortless modern style." },
     { category: "Women", name: "Minimal Everyday Dress", price: "৳2,490", image: "photo-1595777457583-95e059d581b8", description: "A clean and elegant everyday dress made for modern comfort and style." },
@@ -18,8 +21,14 @@ export default function Checkout() {
   ];
   const customProducts = JSON.parse(localStorage.getItem("fx_products") || "[]");
   const allProducts = [...defaultProducts, ...customProducts];
-  const directProduct = buyNowIndex !== null ? allProducts[Number(buyNowIndex)] : null;
-  const checkoutItems = directProduct ? [{ ...directProduct, size: buyNowSize, quantity: buyNowQuantity }] : cartItems;
+  const directProduct =
+    directBuyProduct ||
+    (buyNowIndex !== null && buyNowIndex !== "direct"
+      ? allProducts[Number(buyNowIndex)]
+      : null);
+  const checkoutItems = directProduct
+    ? [{ ...directProduct, size: buyNowSize, quantity: buyNowQuantity }]
+    : cartItems;
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "", city: "", area: "" });
