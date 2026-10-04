@@ -6,6 +6,8 @@ import { db } from "../firebase.js";
 import { LayoutDashboard, ShoppingCart, Package, Settings, LogOut, Menu, X, TrendingUp, Clock3, CheckCircle2 } from "lucide-react";
 
 export default function Admin() {
+  const AVAILABLE_SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "Free Size"];
+
   const [loggedIn, setLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -526,6 +528,29 @@ const [editingProductId, setEditingProductId] = useState(null);
     }
   };
 
+  const deleteOrder = async (firestoreId, orderId) => {
+    if (!firestoreId) {
+      setNotice("Could not delete order: Firebase document ID is missing.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete order ${orderId || ""}? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "orders", firestoreId));
+      setOrders((current) =>
+        current.filter((item) => item.firestoreId !== firestoreId)
+      );
+      setNotice("Order deleted successfully.");
+    } catch (error) {
+      setNotice("Could not delete order from Firebase.");
+    }
+  };
+
   const handleImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -781,7 +806,53 @@ const [editingProductId, setEditingProductId] = useState(null);
 
             <input value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="Stock Quantity" inputMode="numeric" className="border border-black/15 px-4 py-3 text-sm outline-none" />
 
-            <input value={newProduct.sizes} onChange={(e) => setNewProduct({ ...newProduct, sizes: e.target.value })} placeholder="Sizes (e.g. S, M, L, XL)" className="border border-black/15 px-4 py-3 text-sm outline-none" />
+            <div className="border border-black/15 p-4 md:col-span-2">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Available Sizes</p>
+              <p className="mt-1 text-xs text-black/45">Select only the sizes available for this product.</p>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                {AVAILABLE_SIZES.map((size) => {
+                  const selectedSizes = String(newProduct.sizes || "")
+                    .split(",")
+                    .map((item) => item.trim())
+                    .filter(Boolean);
+
+                  const checked = selectedSizes.includes(size);
+
+                  return (
+                    <label
+                      key={size}
+                      className={`flex cursor-pointer items-center gap-2 border px-4 py-3 text-xs font-semibold transition ${
+                        checked
+                          ? "border-black bg-black text-white"
+                          : "border-black/10 bg-white text-black hover:border-black/30"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const nextSizes = e.target.checked
+                            ? [...new Set([...selectedSizes, size])]
+                            : selectedSizes.filter((item) => item !== size);
+
+                          setNewProduct({
+                            ...newProduct,
+                            sizes: nextSizes.join(", ")
+                          });
+                        }}
+                        className="h-4 w-4 accent-black"
+                      />
+                      {size}
+                    </label>
+                  );
+                })}
+              </div>
+
+              <p className="mt-3 text-[10px] text-black/40">
+                Selected: {newProduct.sizes || "None"}
+              </p>
+            </div>
 
             <input value={newProduct.rating} onChange={(e) => setNewProduct({ ...newProduct, rating: e.target.value })} placeholder="Rating (1-5)" inputMode="decimal" className="border border-black/15 px-4 py-3 text-sm outline-none" />
 
@@ -880,7 +951,15 @@ const [editingProductId, setEditingProductId] = useState(null);
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => deleteOrder(order.firestoreId, order.id)}
+                          className="border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-red-700 transition hover:border-red-300 hover:bg-red-100"
+                        >
+                          🗑️ Delete
+                        </button>
+
                         <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-black/40">Status</span>
                         <div className="relative">
                           <button
