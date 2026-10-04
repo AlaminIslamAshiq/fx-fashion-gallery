@@ -1,116 +1,415 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Heart } from "lucide-react";
-import { useCart } from "../context/CartContext.jsx";
-import { useWishlist } from "../context/WishlistContext.jsx";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase.js";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Heart, Minus, Plus, ShoppingBag, ShoppingCart, Check } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
 const defaultProducts = [
-  { category: "Men", name: "Essential Oversized Shirt", price: "৳1,890", image: "photo-1602810318383-e386cc2a3ccf", description: "A premium everyday oversized shirt designed for effortless modern style." },
-  { category: "Women", name: "Minimal Everyday Dress", price: "৳2,490", image: "photo-1595777457583-95e059d581b8", description: "A clean and elegant everyday dress made for modern comfort and style." },
-  { category: "Men", name: "Classic Street Jacket", price: "৳2,790", image: "photo-1551028719-00167b16eac5", description: "A versatile street-inspired jacket that adds a refined edge to any look." },
-  { category: "Women", name: "Modern Casual Look", price: "৳2,190", image: "photo-1539109136881-3be0616acf4b", description: "A modern casual fashion piece designed for everyday confidence." }
+  {
+    id: "1",
+    name: "Premium Black Shirt",
+    category: "Men",
+    price: "৳1,250",
+    rating: 5,
+    image: "photo-1521572163474-6864f9cf17ab",
+    description: "Premium quality fashion shirt with a clean modern look."
+  },
+  {
+    id: "2",
+    name: "Classic Denim Jacket",
+    category: "Men",
+    price: "৳1,850",
+    rating: 5,
+    image: "photo-1551028719-00167b16eac5",
+    description: "Comfortable and stylish denim jacket."
+  }
 ];
+
+function getImageUrl(imageData, image) {
+  if (imageData) return imageData;
+  if (image) {
+    return `https://images.unsplash.com/${image}?auto=format&fit=crop&w=900&q=85`;
+  }
+  return "";
+}
+
+function getGallery(product) {
+  if (Array.isArray(product?.images) && product.images.length) {
+    return product.images
+      .filter((item) => item?.imageData)
+      .map((item) => ({
+        imageData: item.imageData,
+        color: String(item.color || "").trim()
+      }));
+  }
+
+  if (product?.imageData) {
+    return [{ imageData: product.imageData, color: "" }];
+  }
+
+  if (product?.image) {
+    return [{ imageData: getImageUrl("", product.image), color: "" }];
+  }
+
+  return [];
+}
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const [customProducts, setCustomProducts] = useState([]);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
-      setCustomProducts(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const products = [...defaultProducts, ...customProducts];
-  const defaultIndex = id && id.startsWith("default-") ? Number(id.replace("default-", "")) : -1;
-  const product = customProducts.find((item) => item.id === id)
-    || (defaultIndex >= 0 ? defaultProducts[defaultIndex] : null)
-    || products[0];
-
-  const basePrice = Number(String(product.price || "").replace(/[^0-9.]/g, "")) || 0;
-  const discountValue = Number(product.discountValue || 0);
-  const salePrice = product.discountEnabled
-    ? product.discountType === "percentage"
-      ? Math.max(0, basePrice - (basePrice * discountValue / 100))
-      : Math.max(0, basePrice - discountValue)
-    : basePrice;
-
-  const availableSizes = String(product.sizes || "")
-    .split(",")
-    .map((size) => size.trim())
-    .filter(Boolean);
-
-  const sizes = availableSizes.length ? availableSizes : ["M", "L", "XL", "XXL"];
-
-  const stockQuantity = Number(product.stock || 0);
-  const hasStock = product.stock === "" || stockQuantity > 0;
-
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(sizes[0]);
-  const [added, setAdded] = useState(false);
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
-  const saved = isWishlisted(product.id);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0);
+  const [selectedColor, setSelectedColor] = useState("");
+  const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProduct = async () => {
+      setLoading(true);
+
+      try {
+        const foundDefault = defaultProducts.find((item) => String(item.id) === String(id));
+
+        if (foundDefault) {
+          if (mounted) setProduct(foundDefault);
+          return;
+        }
+
+        const snap = await getDoc(doc(db, "products", id));
+
+        if (mounted) {
+          setProduct(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+        }
+      } catch (error) {
+        console.error(error);
+        if (mounted) setProduct(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadProduct();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const gallery = useMemo(() => getGallery(product || {}), [product]);
+
+  const colors = useMemo(
+    () => [...new Set(gallery.map((item) => item.color).filter(Boolean))],
+    [gallery]
+  );
+
+  const availableSizes = useMemo(
+    () =>
+      String(product?.sizes || "")
+        .split(",")
+        .map((size) => size.trim())
+        .filter(Boolean),
+    [product]
+  );
+
+  const sizes = availableSizes.length
+    ? availableSizes
+    : ["M", "L", "XL", "XXL"];
+
+  useEffect(() => {
+    if (!product) return;
+
+    setSelectedSize((current) =>
+      current && sizes.includes(current) ? current : sizes[0]
+    );
+
+    if (colors.length) {
+      const firstColor = colors[0];
+      setSelectedColor(firstColor);
+
+      const firstColorIndex = gallery.findIndex(
+        (item) => item.color === firstColor
+      );
+
+      setSelectedGalleryIndex(firstColorIndex >= 0 ? firstColorIndex : 0);
+    } else {
+      setSelectedColor("");
+      setSelectedGalleryIndex(0);
+    }
+
+    setQuantity(1);
+    setAdded(false);
+  }, [product?.id, colors.join("|"), sizes.join("|")]);
+
+  const selectedGallery = gallery[selectedGalleryIndex] || gallery[0];
+  const selectedImageData = selectedGallery?.imageData || "";
+
+  const basePrice = Number(
+    String(product?.price || "0").replace(/[^\d.]/g, "")
+  );
+
+  const discountEnabled = Boolean(product?.discountEnabled);
+  const discountValue = Number(product?.discountValue || 0);
+
+  const salePrice =
+    discountEnabled && discountValue > 0
+      ? product.discountType === "percentage"
+        ? Math.max(0, basePrice - (basePrice * discountValue) / 100)
+        : Math.max(0, basePrice - discountValue)
+      : basePrice;
+
+  const formatPrice = (value) => `৳${Number(value || 0).toLocaleString()}`;
+
+  const buildCartProduct = () => ({
+    ...product,
+    price: formatPrice(salePrice),
+    originalPrice: basePrice,
+    salePrice,
+    color: selectedColor || "",
+    selectedImageData: selectedImageData || product.imageData || ""
+  });
+
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+
+    const index = gallery.findIndex((item) => item.color === color);
+
+    if (index >= 0) {
+      setSelectedGalleryIndex(index);
+    }
+  };
+
+  const handleAddToCart = () => {
+    addToCart(buildCartProduct(), selectedSize, quantity);
+    setAdded(true);
+
+    window.setTimeout(() => setAdded(false), 1800);
+  };
+
+  const handleBuyNow = () => {
+    const productForCheckout = {
+      ...buildCartProduct(),
+      size: selectedSize,
+      quantity
+    };
+
+    localStorage.setItem("fx_buy_now", JSON.stringify(productForCheckout));
+    navigate("/checkout?buyNow=direct");
+  };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center text-black/50">
+        Loading product...
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-semibold">Product not found</h1>
+        <Link
+          to="/shop"
+          className="mt-5 inline-flex rounded-xl bg-black px-5 py-3 text-white"
+        >
+          Back to Shop
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] px-5 py-8 text-[#111] md:px-10">
-      <div className="mx-auto max-w-6xl">
-        <Link to="/shop" className="text-[10px] font-bold uppercase tracking-[0.2em]">← Back to Shop</Link>
-        <section className="mt-8 grid gap-10 md:grid-cols-2 md:gap-16">
-          <div className="aspect-[3/4] overflow-hidden bg-[#e9e9e5]">
-            <img src={product.imageData || `https://images.unsplash.com/${product.image}?auto=format&fit=crop&w=1000&q=90`} alt={product.name} className="h-full w-full object-cover" />
+    <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <div className="grid gap-10 lg:grid-cols-2">
+        <div>
+          <div className="relative overflow-hidden rounded-3xl bg-black/[0.03]">
+            {selectedImageData && (
+              <img
+                src={selectedImageData}
+                alt={product.name}
+                className="aspect-square w-full object-cover"
+              />
+            )}
+
+            <button
+              type="button"
+              onClick={() => toggleWishlist(product)}
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md"
+              aria-label="Wishlist"
+            >
+              <Heart
+                size={21}
+                fill={isWishlisted(product.id) ? "currentColor" : "none"}
+              />
+            </button>
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/40">{product.category}</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">{product.name}</h1>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <p className="text-2xl font-semibold">৳{salePrice.toLocaleString()}</p>
-              {product.discountEnabled && salePrice < basePrice && (
-                <>
-                  <p className="text-sm text-black/40 line-through">৳{basePrice.toLocaleString()}</p>
-                  <span className="bg-black px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-white">
-                    {product.discountType === "percentage"
-                      ? product.discountValue + "% OFF"
-                      : "৳" + Number(product.discountValue).toLocaleString() + " OFF"}
-                  </span>
-                </>
-              )}
+
+          {gallery.length > 1 && (
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+              {gallery.map((item, index) => (
+                <button
+                  type="button"
+                  key={`${item.imageData.slice(-20)}-${index}`}
+                  onClick={() => {
+                    setSelectedGalleryIndex(index);
+                    if (item.color) setSelectedColor(item.color);
+                  }}
+                  className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 ${
+                    selectedGalleryIndex === index
+                      ? "border-black"
+                      : "border-transparent"
+                  }`}
+                >
+                  <img
+                    src={item.imageData}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+
+                  {item.color && (
+                    <span className="absolute bottom-1 left-1 right-1 truncate rounded bg-black/65 px-1 py-0.5 text-[10px] text-white">
+                      {item.color}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
-            <p className="mt-6 max-w-lg text-sm leading-7 text-black/55">{product.description}</p>
-            <div className="mt-8">
-              <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Select Size</p>
-              <div className="mt-3 flex gap-2">
-                {sizes.map((size) => <button key={size} onClick={() => setSelectedSize(size)} className={`h-11 min-w-12 border px-3 text-xs transition ${selectedSize === size ? "border-black bg-black text-white" : "border-black/15 hover:border-black hover:bg-black hover:text-white"}`}>{size}</button>)}
+          )}
+        </div>
+
+        <div>
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-black/45">
+            {product.category}
+          </p>
+
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+            {product.name}
+          </h1>
+
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-2xl font-semibold">
+              {formatPrice(salePrice)}
+            </span>
+
+            {discountEnabled && salePrice < basePrice && (
+              <span className="text-sm text-black/40 line-through">
+                {formatPrice(basePrice)}
+              </span>
+            )}
+          </div>
+
+          <p className="mt-6 leading-7 text-black/65">
+            {product.description || "Premium quality product from FX Fashion Gallery."}
+          </p>
+
+          {colors.length > 0 && (
+            <div className="mt-7">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="font-semibold">Select Color</span>
+                <span className="text-sm text-black/50">{selectedColor}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {colors.map((color) => {
+                  const active = selectedColor === color;
+
+                  return (
+                    <button
+                      type="button"
+                      key={color}
+                      onClick={() => handleColorSelect(color)}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                        active
+                          ? "border-black bg-black text-white"
+                          : "border-black/15 bg-white text-black hover:border-black"
+                      }`}
+                    >
+                      {active && <Check size={16} strokeWidth={3} />}
+                      {color}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="mt-8 flex items-center justify-between border border-black/15 px-4 py-3">
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Quantity</span>
-              <div className="flex items-center gap-5">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-lg">−</button>
-                <span className="min-w-5 text-center text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="text-lg">+</button>
-              </div>
+          )}
+
+          <div className="mt-7">
+            <span className="mb-3 block font-semibold">Select Size</span>
+
+            <div className="flex flex-wrap gap-2">
+              {sizes.map((size) => (
+                <button
+                  type="button"
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`min-w-14 rounded-xl border px-4 py-3 text-sm font-medium ${
+                    selectedSize === size
+                      ? "border-black bg-black text-white"
+                      : "border-black/15 bg-white"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
-            <div className="mt-3 flex gap-2">
+          </div>
+
+          <div className="mt-7">
+            <span className="mb-3 block font-semibold">Quantity</span>
+
+            <div className="inline-flex items-center overflow-hidden rounded-xl border border-black/15">
               <button
                 type="button"
-                onClick={() => toggleWishlist(product)}
-                className={"flex h-14 w-14 shrink-0 items-center justify-center border transition " + (saved ? "border-black bg-black text-white" : "border-black/15 hover:border-black")}
-                aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
-                title={saved ? "Remove from wishlist" : "Save to wishlist"}
+                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                className="p-3"
               >
-                <Heart className={"h-5 w-5 " + (saved ? "fill-current" : "")} />
+                <Minus size={17} />
               </button>
-              <button disabled={!hasStock} onClick={() => { const cartProduct = { ...product, price: "৳" + salePrice.toLocaleString(), originalPrice: basePrice, salePrice }; addToCart(cartProduct, selectedSize, quantity); setAdded(true); setTimeout(() => setAdded(false), 2000); }} className={"flex-1 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition " + (hasStock ? "bg-black hover:bg-black/80" : "cursor-not-allowed bg-black/30")}>{!hasStock ? "Out of Stock" : added ? "Added to Cart ✓" : "Add to Cart"}</button>
+
+              <span className="min-w-12 text-center font-medium">
+                {quantity}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setQuantity((value) => value + 1)}
+                className="p-3"
+              >
+                <Plus size={17} />
+              </button>
             </div>
-            <Link to={`/checkout?buyNow=${products.indexOf(product)}&size=${selectedSize}&quantity=${quantity}`} className="mt-2 block w-full border border-black bg-transparent py-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-black transition hover:bg-black hover:text-white">Buy Now</Link>
           </div>
-        </section>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-black px-5 py-3.5 font-medium"
+            >
+              {added ? <Check size={19} /> : <ShoppingCart size={19} />}
+              {added ? "Added to Cart" : "Add to Cart"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-black px-5 py-3.5 font-medium text-white"
+            >
+              <ShoppingBag size={19} />
+              Buy Now
+            </button>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

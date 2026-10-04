@@ -34,6 +34,7 @@ export default function Admin() {
 });
   const [imageName, setImageName] = useState("");
 const [editingProductId, setEditingProductId] = useState(null);
+const [productImages, setProductImages] = useState([{ imageData: "", color: "" }]);
   const [openStatusId, setOpenStatusId] = useState(null);
   const [openPaymentId, setOpenPaymentId] = useState(null);
   const [orderSearch, setOrderSearch] = useState("");
@@ -463,103 +464,76 @@ const [editingProductId, setEditingProductId] = useState(null);
   };
 
   const editProduct = (product) => {
-    setEditingProductId(product.id);
-    setNewProduct({
-      name: product.name || "",
-      category: product.category || "Men",
-      price: product.price || "",
-      discountEnabled: product.discountEnabled || false,
-      discountType: product.discountType || "percentage",
-      discountValue: product.discountValue || "",
-      stock: product.stock || "",
-      sizes: product.sizes || "",
-      rating: product.rating || "5",
-      featured: product.featured || false,
-      newArrival: product.newArrival || false,
-      active: product.active !== false,
-      description: product.description || "",
-      imageData: product.imageData || ""
-    });
-    setImageName("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  setEditingProductId(product.id);
 
-  const updateProduct = async (e) => {
-    e.preventDefault();
+  setNewProduct({
+    name: product.name || "",
+    category: product.category || "Men",
+    price: product.price || "",
+    discountEnabled: product.discountEnabled || false,
+    discountType: product.discountType || "percentage",
+    discountValue: product.discountValue || "",
+    stock: product.stock || "",
+    sizes: product.sizes || "",
+    rating: product.rating || "5",
+    featured: product.featured || false,
+    newArrival: product.newArrival || false,
+    active: product.active !== false,
+    description: product.description || "",
+    imageData: product.imageData || ""
+  });
 
-    if (!editingProductId) return;
+  syncProductImagesFromProduct(product);
+  setImageName("");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
-    try {
-      await updateDoc(doc(db, "products", editingProductId), {
-        ...newProduct,
-        updatedAt: new Date().toISOString()
-      });
 
-      setEditingProductId(null);
-      setNewProduct({
-        name: "",
-        category: "Men",
-        price: "",
-        discountEnabled: false,
-        discountType: "percentage",
-        discountValue: "",
-        stock: "",
-        sizes: "",
-        rating: "5",
-        featured: false,
-        newArrival: false,
-        active: true,
-        description: "",
-        imageData: ""
-      });
-      setImageName("");
-      setNotice("Product updated successfully.");
-    } catch (error) {
-      setNotice("Could not update product in Firebase.");
-    }
-  };
+const updateProductImageColor = (index, color) => {
+  setProductImages((current) =>
+    current.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, color } : item
+    )
+  );
+};
 
-  const deleteProduct = async (id) => {
-    try {
-      await deleteDoc(doc(db, "products", id));
-      setNotice("Product deleted successfully.");
-    } catch (error) {
-      setNotice("Could not delete product from Firebase.");
-    }
-  };
+const syncProductImagesFromProduct = (product) => {
+  const source = Array.isArray(product.images) && product.images.length
+    ? product.images
+    : [{ imageData: product.imageData || "", color: "" }];
 
-  const deleteOrder = async (firestoreId, orderId) => {
-    if (!firestoreId) {
-      setNotice("Could not delete order: Firebase document ID is missing.");
-      return;
-    }
+  setProductImages(
+    source.slice(0, 6).map((item) => ({
+      imageData: item.imageData || "",
+      color: item.color || ""
+    }))
+  );
+};
 
-    const confirmed = window.confirm(
-      `Are you sure you want to permanently delete order ${orderId || ""}? This cannot be undone.`
-    );
+const resetProductForm = () => {
+  setNewProduct({
+    name: "",
+    category: "Men",
+    price: "",
+    discountEnabled: false,
+    discountType: "percentage",
+    discountValue: "",
+    stock: "",
+    sizes: "",
+    rating: "5",
+    featured: false,
+    newArrival: false,
+    active: true,
+    description: "",
+    imageData: ""
+  });
+  setProductImages([{ imageData: "", color: "" }]);
+  setImageName("");
+};
 
-    if (!confirmed) return;
-
-    try {
-      await deleteDoc(doc(db, "orders", firestoreId));
-      setOrders((current) =>
-        current.filter((item) => item.firestoreId !== firestoreId)
-      );
-      setNotice("Order deleted successfully.");
-    } catch (error) {
-      setNotice("Could not delete order from Firebase.");
-    }
-  };
-
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { setNotice("The selected image is larger than 2MB. Please choose a smaller image."); return; }
-    const reader = new FileReader();
-    reader.onload = () => setNewProduct((current) => ({ ...current, imageData: reader.result }));
-    reader.readAsDataURL(file);
-    setImageName(file.name);
-  };
+const handleImage = (e) => {
+  handleMultipleProductImage(0, e);
+};
 
   const getOrderStatusClass = (status) => {
     const classes = {
@@ -873,7 +847,40 @@ const [editingProductId, setEditingProductId] = useState(null);
               </label>
             </div>
 
-            <input type="file" accept="image/*" onChange={handleImage} className="border border-black/15 px-4 py-3 text-sm" />
+            <div className="md:col-span-2 rounded-2xl border border-black/10 bg-white p-4">
+  <div className="flex items-center justify-between gap-3 mb-4">
+    <div>
+      <h3 className="font-semibold">Product Images & Colors</h3>
+      <p className="text-xs text-black/50 mt-1">Add up to 6 images. Color is optional.</p>
+    </div>
+    <button type="button" onClick={addProductImageSlot} className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white">
+      + Add Image
+    </button>
+  </div>
+
+  <div className="space-y-4">
+    {productImages.map((item, index) => (
+      <div key={index} className="grid gap-3 rounded-2xl border border-black/10 p-3 md:grid-cols-[1fr_180px_auto]">
+        <div>
+          <label className="mb-2 block text-xs font-medium text-black/60">Image {index + 1}</label>
+          <input type="file" accept="image/*" onChange={(e) => handleMultipleProductImage(index, e)} className="w-full border border-black/15 px-3 py-2 text-sm" />
+          {item.imageData && <img src={item.imageData} alt={`Product ${index + 1}`} className="mt-3 h-24 w-24 rounded-xl object-cover border border-black/10" />}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-xs font-medium text-black/60">Color (optional)</label>
+          <input type="text" value={item.color} onChange={(e) => updateProductImageColor(index, e.target.value)} placeholder="e.g. Black" className="w-full rounded-xl border border-black/15 px-3 py-2 text-sm" />
+        </div>
+
+        <div className="flex items-end">
+          <button type="button" onClick={() => removeProductImageSlot(index)} className="w-full rounded-xl border border-red-200 px-3 py-2 text-sm text-red-600">
+            Remove
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
             <textarea value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} placeholder="Description" rows="4" className="border border-black/15 px-4 py-3 text-sm outline-none md:col-span-2" />
             {imageName && <p className="text-xs text-black/50 md:col-span-2">Selected: {imageName}</p>}
             <button type="submit" className="bg-black px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white md:col-span-2">{editingProductId ? "Update Product" : "Add Product"}</button>

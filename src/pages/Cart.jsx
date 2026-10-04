@@ -37,7 +37,7 @@ export default function Cart() {
               {cartItems.map((item, index) => (
                 <article key={`${item.name}-${index}`} className="flex gap-5 border-b border-black/10 pb-5">
                   <img
-                    src={item.imageData || (item.image ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&q=80` : "")}
+                    src={item.selectedImageData || item.imageData || (item.image ? `https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&q=80` : "")}
                     alt={item.name}
                     className="h-32 w-24 object-cover"
                   />
@@ -46,7 +46,10 @@ export default function Cart() {
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/40">{item.category}</p>
                       <h2 className="mt-1 text-base font-semibold">{item.name}</h2>
-                      <p className="mt-2 text-xs text-black/50">Size: {item.size} · Qty: {item.quantity}</p>
+                      <p className="mt-2 text-xs text-black/50">
+  {item.color ? `Color: ${item.color} · ` : ""}
+  Size: {item.size} · Qty: {item.quantity}
+</p>
                     </div>
 
                     <div className="mt-4 flex items-center justify-between">
