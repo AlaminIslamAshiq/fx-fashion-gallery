@@ -600,7 +600,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                             : basePrice;
 
                         return (
-                          <article key={product.id} className="group">
+                          <article key={product.id} className="group min-w-0">
                             <Link to={"/product/" + product.id} className="block">
                               <div className="relative aspect-[3/4] overflow-hidden bg-[#eeeeeb]">
                                 {product.imageData ? (
@@ -735,7 +735,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                             return (
                               <article key={productId} className="group">
                                 <Link to={"/product/" + productId} className="block">
-                                  <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5] shadow-sm transition duration-500 group-hover:-translate-y-1 group-hover:shadow-xl">
+                                  <div className="relative aspect-[4/5] overflow-hidden bg-[#e9e9e5] shadow-sm transition duration-500 group-hover:-translate-y-1 group-hover:shadow-xl md:rounded-sm">
                                     {product.imageData ? (
                                       <img
                                         src={product.imageData}
@@ -786,12 +786,12 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                                   </div>
 
                                   <Link to={"/product/" + productId}>
-                                    <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-5 md:text-[15px]">
+                                    <h3 className="mt-1.5 min-h-10 line-clamp-2 text-[13px] font-semibold leading-5 sm:text-sm md:text-[15px]">
                                       {product.name || "Untitled Product"}
                                     </h3>
                                   </Link>
 
-                                  <div className="mt-2.5 flex items-baseline gap-2">
+                                  <div className="mt-2.5 flex min-h-6 flex-wrap items-baseline gap-x-2 gap-y-1">
                                     <span className="text-[15px] font-bold tracking-tight">
                                       ৳{salePrice.toLocaleString()}
                                     </span>
@@ -803,7 +803,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                                     )}
                                   </div>
 
-                                  <div className="mt-4 grid grid-cols-2 gap-2">
+                                  <div className="mt-4 grid grid-cols-2 gap-1.5 sm:gap-2">
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -817,7 +817,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                                         setAddedProduct(product.name);
                                         setTimeout(() => setAddedProduct(""), 1800);
                                       }}
-                                      className="rounded-full border border-black bg-white py-3 text-[8px] font-bold uppercase tracking-[0.16em] text-black transition hover:bg-black hover:text-white"
+                                      className="min-h-11 rounded-full border border-black bg-white px-2 py-3 text-[7px] font-bold uppercase tracking-[0.11em] text-black transition hover:bg-black hover:text-white sm:text-[8px] sm:tracking-[0.14em]"
                                     >
                                       {addedProduct === product.name ? "Added ✓" : "Add to Cart"}
                                     </button>
@@ -838,7 +838,7 @@ const defaultSiteSettings = { storeName: "FX Fashion Gallery", tagline: "Modern 
                                         );
                                         window.location.href = "/checkout?buyNow=direct";
                                       }}
-                                      className="rounded-full bg-black py-3 text-[8px] font-bold uppercase tracking-[0.16em] text-white transition hover:bg-black/80"
+                                      className="min-h-11 rounded-full bg-black px-2 py-3 text-[7px] font-bold uppercase tracking-[0.11em] text-white transition hover:bg-black/80 sm:text-[8px] sm:tracking-[0.14em]"
                                     >
                                       Buy Now
                                     </button>
