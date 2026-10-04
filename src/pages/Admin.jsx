@@ -322,6 +322,18 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
     return <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] text-sm text-black/50">Loading Admin...</main>;
   }
 
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "settings", "navigation"), (snapshot) => {
+      if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
+        const items = snapshot.data().items;
+        setNavigationItems(items);
+        localStorage.setItem("fx_navigation", JSON.stringify(items));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   if (!loggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] px-5 text-[#111]">
@@ -335,20 +347,6 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
       </main>
     );
   }
-
-
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, "settings", "navigation"), (snapshot) => {
-      if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
-        const items = snapshot.data().items;
-        setNavigationItems(items);
-        localStorage.setItem("fx_navigation", JSON.stringify(items));
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const saveNavigationSettings = async () => {
     try {
