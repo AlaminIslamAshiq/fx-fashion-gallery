@@ -659,7 +659,13 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
       setEditingProductId(null);
     } catch (error) {
       console.error("PRODUCT SAVE ERROR:", error);
-      setNotice("Could not save product to Firebase.");
+
+      const code = error?.code || "";
+      const message = error?.message || "";
+
+      setNotice(
+        `Could not save product to Firebase.${code ? ` [${code}]` : ""}${message ? ` ${message}` : ""}`
+      );
     }
   };
 
@@ -691,23 +697,39 @@ const [productImages, setProductImages] = useState([{ imageData: "", color: "" }
 
 const compressProductImage = (file) => new Promise((resolve, reject) => {
   if (!file) return resolve("");
+
   const reader = new FileReader();
+
   reader.onload = () => {
     const img = new Image();
+
     img.onload = () => {
-      const maxSize = 1000;
+      const maxSize = 800;
       const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(img.width * scale));
       canvas.height = Math.max(1, Math.round(img.height * scale));
+
       const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        reject(new Error("Could not create image canvas."));
+        return;
+      }
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.78));
+
+      resolve(canvas.toDataURL("image/jpeg", 0.55));
     };
-    img.onerror = reject;
+
+    img.onerror = () => reject(new Error("Could not load image."));
     img.src = reader.result;
   };
-  reader.onerror = reject;
+
+  reader.onerror = () => reject(new Error("Could not read image file."));
   reader.readAsDataURL(file);
 });
 
